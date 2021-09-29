@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">Pixabay Lite</string>
+    <string name="downloads">Скачиваний: %d</string>
+    <string name="size">Разрешение: %dx%d</string>
+    <string name="weight">Размер: %.2f Мб</string>
+    <string name="btn_save">Сохранить</string>
+    <string name="menu_sort">Сортировка</string>
+    <string name="menu_search">Поиск</string>
+    <string name="image_saved">Изображение сохранено в папку PixabayLite</string>
+    <string name="sort_by_popular">Показаны самые популярные изображения</string>
+    <string name="sort_by_latest">Показаны самые новые изображения</string>
+    <string name="download_started">Началась загрузка изображения</string>
+    <string name="error_create_folder">Ошибка при создании папки</string>
+</resources>
