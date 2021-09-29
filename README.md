@@ -7,6 +7,6 @@
 
 «Pixabay Lite» is a lite version of the application for accessing images of the Pixabay service. Download and search for the latest and most popular images in a couple of clicks.
 
-<img src="/design/Скриншот 1.png" width="200"><img src="/design/Скриншот 2.png" width="200">
+<img src="/design/Скриншот 1.png" width="200"> <img src="/design/Скриншот 2.png" width="200">
 <img src="/design/Скриншот 3.png" width="200"> <img src="/design/Скриншот 4.png" width="200">
 <img src="/design/Скриншот 5.png" width="200"> <img src="/design/Скриншот 6.png" width="200">
