@@ -14,9 +14,8 @@ android {
         applicationId "ru.bruimafia.pixabaylite"
         minSdk 21
         targetSdk 31
-        versionCode 3
-        versionName "1.0.2"
-
+        versionCode 5
+        versionName "1.1"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "pixabay_lite-$versionName-code$versionCode")
@@ -24,24 +23,27 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
         buildFeatures {
             dataBinding true
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = '1.8'
     }
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.6.0'
+    implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.3.1'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
@@ -59,7 +61,7 @@ dependencies {
     implementation 'de.hdodenhof:circleimageview:3.1.0' // CircleImageView
     implementation 'com.intuit.sdp:sdp-android:1.0.6' // SDP - a scalable size unit / аналог папок dimens
     implementation 'com.onesignal:OneSignal:[4.0.0, 4.99.99]' // OneSignal
-    implementation 'com.yandex.android:mobmetricalib:3.21.0' // AppMetrica SDK
+    implementation 'com.yandex.android:mobmetricalib:3.21.1' // AppMetrica SDK
     implementation 'com.google.android.gms:play-services-ads:20.4.0' // Google Mobile Ads
     implementation platform('com.google.firebase:firebase-bom:28.4.1') // Firebase BoM
     implementation 'com.google.firebase:firebase-analytics-ktx' // Google Analytics library

@@ -1,7 +1,10 @@
 package ru.bruimafia.pixabaylite.main
 
 import android.Manifest
+import android.app.Dialog
+import android.os.Build;
 import android.app.SearchManager
+import android.content.ActivityNotFoundException
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
 import androidx.appcompat.app.AppCompatActivity
@@ -34,6 +37,14 @@ import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import ru.bruimafia.pixabaylite.R
+import android.content.Intent
+import android.net.Uri
+import android.view.Window
+import com.google.android.material.button.MaterialButton
+
+import ru.bruimafia.pixabaylite.App
+import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -54,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         checkPermiss()
         loadData(query, order, page)
         initAndShowAdsBanner()
+        showPlayRatingDialog()
 
         adapter.setReachEndListener(object : ImageAdapter.OnReachEndListener {
             override fun onLoad() {
@@ -99,6 +111,30 @@ class MainActivity : AppCompatActivity() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
             val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             ActivityCompat.requestPermissions(this, permissions, 0)
+        }
+    }
+
+    private fun showPlayRatingDialog() {
+        if (!SharedPreferencesManager.isPlayRating) {
+            val dialog = Dialog(this)
+            dialog.setContentView(R.layout.dialog_rating)
+            dialog.findViewById<MaterialButton>(R.id.btn_ok).setOnClickListener {
+                // обновление информации об успешном оценивании и открытие приложения в Google Play
+                SharedPreferencesManager.isPlayRating = true
+                try {
+                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + applicationContext.packageName)))
+                } catch (e: ActivityNotFoundException) {
+                    startActivity(
+                        Intent(
+                            Intent.ACTION_VIEW,
+                            Uri.parse("https://play.google.com/store/apps/details?id=" + applicationContext.packageName)
+                        )
+                    )
+                }
+                dialog.cancel()
+            }
+            dialog.findViewById<MaterialButton>(R.id.btn_later).setOnClickListener { dialog.cancel() }
+            dialog.show()
         }
     }
 
@@ -248,4 +284,5 @@ class MainActivity : AppCompatActivity() {
         if (!disposable.isDisposed)
             disposable.dispose()
     }
+
 }

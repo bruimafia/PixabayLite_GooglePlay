@@ -5,11 +5,16 @@ import com.onesignal.OneSignal
 import com.google.android.gms.ads.MobileAds
 import com.yandex.metrica.YandexMetrica
 import com.yandex.metrica.YandexMetricaConfig
+import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 
 
 class App : Application() {
+
     override fun onCreate() {
         super.onCreate()
+        instance = this
+        SharedPreferencesManager.init(this)
+
         // Logging set to help debug issues, remove before releasing your app.
         // OneSignal Initialization
         OneSignal.setLogLevel(OneSignal.LOG_LEVEL.VERBOSE, OneSignal.LOG_LEVEL.NONE)
@@ -25,4 +30,10 @@ class App : Application() {
         YandexMetrica.enableActivityAutoTracking(this)
 
     }
+
+    companion object {
+        lateinit var instance: App
+            private set
+    }
+
 }
