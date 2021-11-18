@@ -1,5 +1,8 @@
 package ru.bruimafia.pixabaylite.model
 
+import androidx.annotation.Keep
+
+@Keep
 data class Image(
     val collections: Int,
     val comments: Int,
