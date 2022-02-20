@@ -2,34 +2,35 @@ package ru.bruimafia.pixabaylite.main
 
 import android.Manifest
 import android.app.Dialog
-import android.os.Build;
 import android.app.SearchManager
 import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
-import androidx.appcompat.app.AppCompatActivity
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.SearchView
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.material.button.MaterialButton
+import com.google.android.material.snackbar.Snackbar
+import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
-import ru.bruimafia.pixabaylite.adapter.ImageAdapter
-import ru.bruimafia.pixabaylite.databinding.ActivityMainBinding
-import ru.bruimafia.pixabaylite.model.Image
-
-import ru.bruimafia.pixabaylite.api.ApiClient
-import ru.bruimafia.pixabaylite.api.ApiService
-import java.io.File
-import android.os.Environment
-import androidx.core.app.ActivityCompat
-import androidx.recyclerview.widget.RecyclerView
-import com.google.android.gms.ads.AdRequest
-import com.google.android.material.snackbar.Snackbar
-import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
@@ -37,21 +38,24 @@ import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import ru.bruimafia.pixabaylite.R
-import android.content.Intent
-import android.net.Uri
-import android.view.Window
-import com.google.android.material.button.MaterialButton
-
-import ru.bruimafia.pixabaylite.App
+import ru.bruimafia.pixabaylite.adapter.ImageAdapter
+import ru.bruimafia.pixabaylite.api.ApiClient
+import ru.bruimafia.pixabaylite.api.ApiService
+import ru.bruimafia.pixabaylite.databinding.ActivityMainBinding
+import ru.bruimafia.pixabaylite.model.Image
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
+import java.io.File
 
 
 class MainActivity : AppCompatActivity() {
+
+    private var TAG = "TESTADS"
 
     private lateinit var bind: ActivityMainBinding
     private var adapter: ImageAdapter = ImageAdapter()
     private lateinit var disposable: Disposable
     private lateinit var searchView: SearchView
+    private var mInterstitialAd: InterstitialAd? = null
 
     private var order = "popular"
     private var query = ""
@@ -64,7 +68,7 @@ class MainActivity : AppCompatActivity() {
 
         checkPermiss()
         loadData(query, order, page)
-        initAndShowAdsBanner()
+        initAdsInterstitial()
         showPlayRatingDialog()
 
         adapter.setReachEndListener(object : ImageAdapter.OnReachEndListener {
@@ -76,6 +80,7 @@ class MainActivity : AppCompatActivity() {
 
         adapter.setSaveButtonListener(object : ImageAdapter.OnSaveButtonListener {
             override fun onSave(image: Image, position: Int) {
+                showAdsInterstitial()
                 downloadFile(image.imageURL.replace("https://pixabay.com/get/", ""))
             }
         })
@@ -107,13 +112,19 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    // проверка разрешений
     private fun checkPermiss() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             ActivityCompat.requestPermissions(this, permissions, 0)
         }
     }
 
+    // показ окна рейтинга
     private fun showPlayRatingDialog() {
         if (!SharedPreferencesManager.isPlayRating) {
             val dialog = Dialog(this)
@@ -138,6 +149,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // меню и строка поиска
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main, menu)
 
@@ -168,6 +180,7 @@ class MainActivity : AppCompatActivity() {
         return super.onCreateOptionsMenu(menu)
     }
 
+    // выбор пунктов меню
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == R.id.action_sort) {
             when (order) {
@@ -190,6 +203,7 @@ class MainActivity : AppCompatActivity() {
         return true
     }
 
+    // загрузка данных
     private fun loadData(q: String, order: String, page: Int) {
         disposable = ApiClient.getClient("https://pixabay.com/api/")
             .create(ApiService::class.java)
@@ -207,6 +221,7 @@ class MainActivity : AppCompatActivity() {
             )
     }
 
+    // показ данных
     private fun showData(list: MutableList<Image>) {
         adapter.setList(list)
         bind.recycler.adapter = adapter
@@ -215,16 +230,19 @@ class MainActivity : AppCompatActivity() {
         bind.swipeRefreshLayout.isRefreshing = false
     }
 
+    // показ подгруженных данных
     private fun showLoadedData(list: MutableList<Image>) {
         adapter.updateList(list)
         page++
         bind.progressBarHor.visibility = View.GONE
     }
 
+    // показ сообщения
     private fun showMessage(msg: String?) {
         Snackbar.make(bind.root, msg + "", Snackbar.LENGTH_LONG).show()
     }
 
+    // скачивание файла
     private fun downloadFile(url: String) {
         showMessage(getString(R.string.download_started))
         disposable = Retrofit.Builder()
@@ -248,6 +266,7 @@ class MainActivity : AppCompatActivity() {
             )
     }
 
+    // сохранение файла
     private fun saveFile(body: ResponseBody, name: String): Boolean {
         try {
             val mediaStorageDir = File(Environment.getExternalStorageDirectory(), "PixabayLite")
@@ -273,9 +292,46 @@ class MainActivity : AppCompatActivity() {
         return false
     }
 
-    private fun initAndShowAdsBanner() {
+    // показ межстраничной рекламы в приложении
+    private fun showAdsInterstitial() {
+        if (mInterstitialAd != null)
+            mInterstitialAd?.show(this)
+        else
+            Log.d(TAG, "The interstitial ad wasn't ready yet.")
+    }
+
+    // инициализация межстраничной рекламы в приложении
+    private fun initAdsInterstitial() {
         val adRequest = AdRequest.Builder().build()
-        bind.adView.loadAd(adRequest)
+
+        InterstitialAd.load(this, getString(R.string.ads_interstitialAd_id), adRequest, object : InterstitialAdLoadCallback() {
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                Log.d(TAG, adError.message)
+                mInterstitialAd = null
+            }
+
+            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                Log.d(TAG, "Ad was loaded.")
+                mInterstitialAd = interstitialAd
+                mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                    override fun onAdDismissedFullScreenContent() {
+                        Log.d(TAG, "Ad was dismissed.")
+                        showMessage(getString(R.string.image_saved))
+                        mInterstitialAd = null
+                        initAdsInterstitial()
+                    }
+
+                    override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+                        Log.d(TAG, "Ad failed to show.")
+                        mInterstitialAd = null
+                    }
+
+                    override fun onAdShowedFullScreenContent() {
+                        Log.d(TAG, "Ad showed fullscreen content.")
+                    }
+                }
+            }
+        })
     }
 
     override fun onDestroy() {

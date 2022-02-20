@@ -3,6 +3,7 @@ package ru.bruimafia.pixabaylite
 import android.app.Application
 import com.onesignal.OneSignal
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.yandex.metrica.YandexMetrica
 import com.yandex.metrica.YandexMetricaConfig
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
