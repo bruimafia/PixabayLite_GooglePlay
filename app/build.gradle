@@ -14,8 +14,8 @@ android {
         applicationId "ru.bruimafia.pixabaylite"
         minSdk 21
         targetSdk 31
-        versionCode 8
-        versionName "1.2.1"
+        versionCode 15
+        versionName "1.3.2"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "pixabay_lite-$versionName-code$versionCode")
@@ -61,10 +61,13 @@ dependencies {
     implementation 'com.squareup.picasso:picasso:2.71828' // Picasso
     implementation 'de.hdodenhof:circleimageview:3.1.0' // CircleImageView
     implementation 'com.intuit.sdp:sdp-android:1.0.6' // SDP - a scalable size unit / аналог папок dimens
-    implementation 'com.onesignal:OneSignal:4.6.7' // OneSignal
-    implementation 'com.yandex.android:mobmetricalib:4.2.0' // AppMetrica SDK
-    implementation 'com.google.android.gms:play-services-ads:20.5.0' // Google Mobile Ads
+    implementation 'com.onesignal:OneSignal:4.7.1' // OneSignal
+    implementation 'com.yandex.android:mobmetricalib:4.2.0' // Yandex AppMetrica SDK
+    implementation 'com.yandex.android:mobileads:5.0.0' // Yandex Mobile Ads
+    implementation 'com.google.android.play:core:1.10.3' // Play Core
+    implementation 'com.google.android.gms:play-services-ads:20.6.0' // Google Mobile Ads
     implementation platform('com.google.firebase:firebase-bom:28.4.1') // Firebase BoM
     implementation 'com.google.firebase:firebase-analytics-ktx' // Google Analytics library
     implementation 'com.google.firebase:firebase-crashlytics-ktx' // Google Crashlytics library
+    implementation 'com.anjlab.android.iab.v3:library:2.0.3' // // In-App purchase. Внутриигровые покупки
 }

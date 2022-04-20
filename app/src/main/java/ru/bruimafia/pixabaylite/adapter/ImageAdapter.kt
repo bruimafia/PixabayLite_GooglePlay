@@ -20,15 +20,16 @@ import ru.bruimafia.pixabaylite.R
 import ru.bruimafia.pixabaylite.databinding.ItemPostBinding
 import ru.bruimafia.pixabaylite.databinding.LayoutAdBinding
 import ru.bruimafia.pixabaylite.model.Image
+import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
 
 class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-    val ITEM_VIEW = 0
-    val AD_VIEW = 1
-    val ITEM_FEED_COUNT = 6
+    private val ITEM_VIEW = 0
+    private val AD_VIEW = 1
+    private val ITEM_FEED_COUNT = 6
 
     lateinit var onReachEndListener: OnReachEndListener
     lateinit var onSaveButtonListener: OnSaveButtonListener
@@ -79,9 +80,10 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        if (holder.itemViewType == ITEM_VIEW)
-            (holder as ImageViewHolder).bind(list[position])
-        else
+        if (holder.itemViewType == ITEM_VIEW) {
+            val pos = if (SharedPreferencesManager.isFullVersion) position else position - (position / ITEM_FEED_COUNT)
+            (holder as ImageViewHolder).bind(list[pos])
+        } else
             (holder as AdViewHolder).bind()
 
         if (list.size >= 10 && position == list.size - 3)
@@ -96,7 +98,7 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
     }
 
     override fun getItemViewType(position: Int): Int {
-        if ((position + 1) % ITEM_FEED_COUNT == 0)
+        if ((position + 1) % ITEM_FEED_COUNT == 0 && !SharedPreferencesManager.isFullVersion)
             return AD_VIEW
 
         return ITEM_VIEW
@@ -163,7 +165,7 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
                 val adLoader = builder
                     .withAdListener(object : AdListener() {
                         override fun onAdFailedToLoad(adError: LoadAdError) {
-                            Log.d("TESTADS", "Error: Ad Failed To Load")
+                            Log.d("TESTADS", "Error (Ad Failed To Load): ${adError.message}")
                         }
                     })
                     .build()

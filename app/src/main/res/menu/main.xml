@@ -15,4 +15,14 @@
         app:actionViewClass="android.widget.SearchView"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/action_buy"
+        android:title="@string/buy"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_about"
+        android:title="@string/about_app"
+        app:showAsAction="never" />
+
 </menu>

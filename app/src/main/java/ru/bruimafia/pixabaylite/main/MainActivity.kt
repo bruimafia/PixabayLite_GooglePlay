@@ -19,6 +19,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
+import com.anjlab.android.iab.v3.BillingProcessor
+import com.anjlab.android.iab.v3.PurchaseInfo
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -27,7 +29,17 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
+import com.google.android.play.core.review.ReviewManagerFactory
+import com.yandex.mobile.ads.interstitial.InterstitialAd as YandexInterstitialAd
+import com.yandex.mobile.ads.common.AdRequest as YandexAdRequest
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
+import com.yandex.mobile.ads.common.AdRequestError
+import com.yandex.mobile.ads.common.ImpressionData
+import com.yandex.mobile.ads.interstitial.InterstitialAdEventListener
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
@@ -47,15 +59,18 @@ import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import java.io.File
 
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
 
     private var TAG = "TESTADS"
 
     private lateinit var bind: ActivityMainBinding
+    private lateinit var appUpdateManager: AppUpdateManager
     private var adapter: ImageAdapter = ImageAdapter()
     private lateinit var disposable: Disposable
     private lateinit var searchView: SearchView
-    private var mInterstitialAd: InterstitialAd? = null
+    private var googleInterstitialAd: InterstitialAd? = null
+    private var yandexInterstitialAd: YandexInterstitialAd? = null
+    private lateinit var bp: BillingProcessor
 
     private var order = "popular"
     private var query = ""
@@ -66,10 +81,18 @@ class MainActivity : AppCompatActivity() {
         bind = DataBindingUtil.setContentView(this, R.layout.activity_main)
         setSupportActionBar(bind.toolbar)
 
-        checkPermiss()
+        bp = BillingProcessor.newBillingProcessor(bind.root.context, getString(R.string.billing_license_key), this)
+        bp.initialize()
+
+        if (bp.isPurchased(getString(R.string.billing_product_id)))
+            SharedPreferencesManager.isFullVersion = true
+
+        checkPermission()
         loadData(query, order, page)
-        initAdsInterstitial()
-        showPlayRatingDialog()
+        initGoogleAdsInterstitial()
+        initYandexAdsInterstitial()
+//        showPlayRatingDialog()
+        checkUpdateAvailability()
 
         adapter.setReachEndListener(object : ImageAdapter.OnReachEndListener {
             override fun onLoad() {
@@ -113,7 +136,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     // проверка разрешений
-    private fun checkPermiss() {
+    private fun checkPermission() {
         if (ActivityCompat.checkSelfPermission(
                 this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE
@@ -121,6 +144,42 @@ class MainActivity : AppCompatActivity() {
         ) {
             val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
             ActivityCompat.requestPermissions(this, permissions, 0)
+        }
+    }
+
+    // проверка обновлений
+    private fun checkUpdateAvailability() {
+        appUpdateManager = AppUpdateManagerFactory.create(this)
+        val appUpdateInfoTask = appUpdateManager.appUpdateInfo
+
+        appUpdateInfoTask.addOnSuccessListener { appUpdateInfo ->
+            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+            ) {
+                appUpdateManager.startUpdateFlowForResult(
+                    appUpdateInfo,
+                    AppUpdateType.IMMEDIATE,
+                    this,
+                    8
+                )
+            }
+        }
+    }
+
+    // окно выставления оценки и отзыва
+    private fun requestReview() {
+        val reviewManager = ReviewManagerFactory.create(this)
+        val requestReviewFlow = reviewManager.requestReviewFlow()
+
+        requestReviewFlow.addOnCompleteListener { request ->
+            if (request.isSuccessful) {
+                val reviewInfo = request.result
+                val flow = reviewManager.launchReviewFlow(this, reviewInfo)
+                flow.addOnCompleteListener {
+//                    SharedPreferencesManager.isPlayRating = true
+//                    showMessage("Оценка поставлена")
+                }
+            }
         }
     }
 
@@ -152,6 +211,8 @@ class MainActivity : AppCompatActivity() {
     // меню и строка поиска
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main, menu)
+
+        menu?.findItem(R.id.action_buy)?.isVisible = !bp.isPurchased(getString(R.string.billing_product_id))
 
         val searchManager = getSystemService(SEARCH_SERVICE) as SearchManager
         searchView = menu!!.findItem(R.id.action_search).actionView as SearchView
@@ -200,6 +261,14 @@ class MainActivity : AppCompatActivity() {
             loadData(query, order, page)
         }
 
+        if (item.itemId == R.id.action_buy) {
+            bp.purchase(this, getString(R.string.billing_product_id))
+        }
+
+        if (item.itemId == R.id.action_about) {
+            AboutDialog().show(supportFragmentManager, "AboutDialog")
+        }
+
         return true
     }
 
@@ -235,6 +304,7 @@ class MainActivity : AppCompatActivity() {
         adapter.updateList(list)
         page++
         bind.progressBarHor.visibility = View.GONE
+        requestReview()
     }
 
     // показ сообщения
@@ -292,38 +362,41 @@ class MainActivity : AppCompatActivity() {
         return false
     }
 
-    // показ межстраничной рекламы в приложении
+    // показ межстраничной Google рекламы в приложении
     private fun showAdsInterstitial() {
-        if (mInterstitialAd != null)
-            mInterstitialAd?.show(this)
+        if (googleInterstitialAd != null && !SharedPreferencesManager.isFullVersion)
+            googleInterstitialAd?.show(this)
         else
             Log.d(TAG, "The interstitial ad wasn't ready yet.")
     }
 
-    // инициализация межстраничной рекламы в приложении
-    private fun initAdsInterstitial() {
+    // инициализация межстраничной Google рекламы в приложении
+    private fun initGoogleAdsInterstitial() {
         val adRequest = AdRequest.Builder().build()
 
         InterstitialAd.load(this, getString(R.string.ads_interstitialAd_id), adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 Log.d(TAG, adError.message)
-                mInterstitialAd = null
+                googleInterstitialAd = null
+                // если с google ошибка, то тогда показываем рекламу Яндекс
+                if (yandexInterstitialAd?.isLoaded == true)
+                    yandexInterstitialAd?.show()
             }
 
             override fun onAdLoaded(interstitialAd: InterstitialAd) {
                 Log.d(TAG, "Ad was loaded.")
-                mInterstitialAd = interstitialAd
-                mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                googleInterstitialAd = interstitialAd
+                googleInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdDismissedFullScreenContent() {
                         Log.d(TAG, "Ad was dismissed.")
                         showMessage(getString(R.string.image_saved))
-                        mInterstitialAd = null
-                        initAdsInterstitial()
+                        googleInterstitialAd = null
+                        initGoogleAdsInterstitial()
                     }
 
                     override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
                         Log.d(TAG, "Ad failed to show.")
-                        mInterstitialAd = null
+                        googleInterstitialAd = null
                     }
 
                     override fun onAdShowedFullScreenContent() {
@@ -334,11 +407,85 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    // инициализация межстраничной Яндекс рекламы в приложении
+    private fun initYandexAdsInterstitial() {
+        yandexInterstitialAd = YandexInterstitialAd(this)
+        yandexInterstitialAd?.setAdUnitId(getString(R.string.ads_yandex_interstitialAd_unitId_test))
+        yandexInterstitialAd?.loadAd(YandexAdRequest.Builder().build())
+        yandexInterstitialAd?.setInterstitialAdEventListener(object : InterstitialAdEventListener {
+            override fun onAdLoaded() {
+                Log.d(TAG, "onAdLoaded")
+            }
 
+            override fun onAdFailedToLoad(adRequestError: AdRequestError) {
+                Log.d(TAG, adRequestError.description)
+            }
+
+            override fun onImpression(impressionData: ImpressionData?) {
+                Log.d(TAG, "onImpression")
+            }
+
+            override fun onAdShown() {
+                Log.d(TAG, "onAdShown")
+            }
+
+            override fun onAdDismissed() {
+                Log.d(TAG, "onAdDismissed")
+                yandexInterstitialAd?.loadAd(com.yandex.mobile.ads.common.AdRequest.Builder().build())
+            }
+
+            override fun onAdClicked() {
+                Log.d(TAG, "onAdClicked")
+            }
+
+            override fun onLeftApplication() {
+                Log.d(TAG, "onLeftApplication")
+            }
+
+            override fun onReturnedToApplication() {
+                Log.d(TAG, "onReturnedToApplication")
+            }
+
+        })
+    }
+
+    override fun onResume() {
+        super.onResume()
+
+        appUpdateManager
+            .appUpdateInfo
+            .addOnSuccessListener { appUpdateInfo ->
+                if (appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        AppUpdateType.IMMEDIATE,
+                        this,
+                        8
+                    )
+                }
+            }
+    }
+
+    override fun onDestroy() {
+        bp.release()
         if (!disposable.isDisposed)
             disposable.dispose()
+        yandexInterstitialAd?.destroy()
+        yandexInterstitialAd = null
+        super.onDestroy()
     }
+
+    override fun onProductPurchased(productId: String, details: PurchaseInfo?) {
+        showMessage(getString(R.string.snackbar_reset_app))
+        SharedPreferencesManager.isFullVersion = true
+    }
+
+    override fun onPurchaseHistoryRestored() {}
+
+    override fun onBillingError(errorCode: Int, error: Throwable?) {
+        showMessage(error?.message)
+    }
+
+    override fun onBillingInitialized() {}
 
 }

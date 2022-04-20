@@ -1,4 +1,5 @@
 <resources>
+    <string name="app_version">версия %s %s (сборка %d)</string>
     <string name="app_name">Pixabay Lite</string>
     <string name="downloads">Скачиваний: %d</string>
     <string name="size">Разрешение: %dx%d</string>
@@ -15,4 +16,9 @@
     <string name="rate_now">Оценить</string>
     <string name="rate_later">Позже</string>
     <string name="ad_info">Реклама</string>
+    <string name="buy">Отключить рекламу</string>
+    <string name="about_app">О программе</string>
+    <string name="tv_about_app">«Pixabay Lite» – это облегченная версия приложения для доступа к изображениям сервиса Pixabay. Скачивайте и ищите самые свежие и самые популярные изображения в пару кликов.</string>
+    <string name="tv_privacy_policy">Политика конфиденциальности</string>
+    <string name="snackbar_reset_app">Отлично, теперь для полноценной работы перезапустите приложение</string>
 </resources>

@@ -17,13 +17,21 @@
         <entry key="..\:/Users/sbruj/AndroidStudioProjects/PixabayLite/app/src/main/res/menu/main.xml" value="0.25" />
         <entry key="..\:/Users/sbruj/AndroidStudioProjects/PixabayLite/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.30462962962962964" />
         <entry key="..\:/Users/sbruj/AndroidStudioProjects/PixabayLite/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.30462962962962964" />
-        <entry key="app/src/main/res/layout/activity_main.xml" value="0.3098958333333333" />
+        <entry key="app/src/main/res/drawable/ic_favorite.xml" value="0.1615" />
+        <entry key="app/src/main/res/drawable/ic_latest.xml" value="0.1615" />
+        <entry key="app/src/main/res/drawable/ic_like.xml" value="0.1615" />
+        <entry key="app/src/main/res/drawable/ic_link_vk.xml" value="0.1615" />
+        <entry key="app/src/main/res/drawable/ic_popular.xml" value="0.1615" />
+        <entry key="app/src/main/res/layout/activity_main.xml" value="0.21316579182942702" />
+        <entry key="app/src/main/res/layout/dialog_about.xml" value="0.3098958333333333" />
         <entry key="app/src/main/res/layout/dialog_rating.xml" value="0.3098958333333333" />
         <entry key="app/src/main/res/layout/item_ad.xml" value="0.3098958333333333" />
         <entry key="app/src/main/res/layout/item_native_ad.xml" value="0.3098958333333333" />
         <entry key="app/src/main/res/layout/item_post.xml" value="0.3098958333333333" />
         <entry key="app/src/main/res/layout/item_tag.xml" value="0.16770833333333332" />
         <entry key="app/src/main/res/layout/layout_ad.xml" value="0.25833333333333336" />
+        <entry key="app/src/main/res/menu/main.xml" value="0.3098958333333333" />
+        <entry key="app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.1615" />
       </map>
     </option>
   </component>

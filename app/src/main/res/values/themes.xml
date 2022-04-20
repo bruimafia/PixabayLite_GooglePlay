@@ -15,5 +15,13 @@
         <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
         <item name="android:navigationBarColor" tools:targetApi="21">?attr/colorPrimary</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+        <item name="android:panelFullBackground">@color/background</item>
+        <item name="android:itemBackground">@color/background</item>
+        <item name="actionOverflowMenuStyle">@style/CMOptionsMenu</item>
     </style>
+
+    <style name="CMOptionsMenu" parent="Widget.AppCompat.PopupMenu.Overflow">
+        <item name="android:popupBackground">@color/background</item>
+    </style>
+
 </resources>
