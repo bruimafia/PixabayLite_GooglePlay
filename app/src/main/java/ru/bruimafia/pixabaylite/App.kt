@@ -24,6 +24,7 @@ class App : Application() {
         OneSignal.initWithContext(this)
         OneSignal.setAppId(getString(R.string.onesignal_app_id))
 
+
         // Google Mobile Ads
         MobileAds.initialize(this)
 
