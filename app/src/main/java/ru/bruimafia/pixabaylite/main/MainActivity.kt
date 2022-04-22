@@ -91,7 +91,6 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
         loadData(query, order, page)
         initGoogleAdsInterstitial()
         initYandexAdsInterstitial()
-//        showPlayRatingDialog()
         checkUpdateAvailability()
 
         adapter.setReachEndListener(object : ImageAdapter.OnReachEndListener {
@@ -177,34 +176,8 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
                 val flow = reviewManager.launchReviewFlow(this, reviewInfo)
                 flow.addOnCompleteListener {
 //                    SharedPreferencesManager.isPlayRating = true
-//                    showMessage("Оценка поставлена")
                 }
             }
-        }
-    }
-
-    // показ окна рейтинга
-    private fun showPlayRatingDialog() {
-        if (!SharedPreferencesManager.isPlayRating) {
-            val dialog = Dialog(this)
-            dialog.setContentView(R.layout.dialog_rating)
-            dialog.findViewById<MaterialButton>(R.id.btn_ok).setOnClickListener {
-                // обновление информации об успешном оценивании и открытие приложения в Google Play
-                SharedPreferencesManager.isPlayRating = true
-                try {
-                    startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + applicationContext.packageName)))
-                } catch (e: ActivityNotFoundException) {
-                    startActivity(
-                        Intent(
-                            Intent.ACTION_VIEW,
-                            Uri.parse("https://play.google.com/store/apps/details?id=" + applicationContext.packageName)
-                        )
-                    )
-                }
-                dialog.cancel()
-            }
-            dialog.findViewById<MaterialButton>(R.id.btn_later).setOnClickListener { dialog.cancel() }
-            dialog.show()
         }
     }
 
