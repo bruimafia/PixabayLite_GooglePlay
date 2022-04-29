@@ -14,7 +14,7 @@ android {
         applicationId "ru.bruimafia.pixabaylite"
         minSdk 21
         targetSdk 31
-        versionCode 16
+        versionCode 17
         versionName "1.3.2"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
@@ -69,5 +69,6 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:28.4.1') // Firebase BoM
     implementation 'com.google.firebase:firebase-analytics-ktx' // Google Analytics library
     implementation 'com.google.firebase:firebase-crashlytics-ktx' // Google Crashlytics library
+    implementation 'com.google.firebase:firebase-messaging-ktx' // Firebase Cloud Messaging
     implementation 'com.anjlab.android.iab.v3:library:2.0.3' // // In-App purchase. Внутриигровые покупки
 }
