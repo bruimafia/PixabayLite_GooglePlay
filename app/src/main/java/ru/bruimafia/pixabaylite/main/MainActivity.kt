@@ -383,7 +383,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
     // инициализация межстраничной Яндекс рекламы в приложении
     private fun initYandexAdsInterstitial() {
         yandexInterstitialAd = YandexInterstitialAd(this)
-        yandexInterstitialAd?.setAdUnitId(getString(R.string.ads_yandex_interstitialAd_unitId_test))
+        yandexInterstitialAd?.setAdUnitId(getString(R.string.ads_yandex_interstitialAd_unitId))
         yandexInterstitialAd?.loadAd(YandexAdRequest.Builder().build())
         yandexInterstitialAd?.setInterstitialAdEventListener(object : InterstitialAdEventListener {
             override fun onAdLoaded() {
