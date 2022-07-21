@@ -367,7 +367,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
                         initGoogleAdsInterstitial()
                     }
 
-                    override fun onAdFailedToShowFullScreenContent(adError: AdError?) {
+                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                         Log.d(TAG, "Ad failed to show.")
                         googleInterstitialAd = null
                     }
@@ -376,6 +376,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
                         Log.d(TAG, "Ad showed fullscreen content.")
                     }
                 }
+
             }
         })
     }
