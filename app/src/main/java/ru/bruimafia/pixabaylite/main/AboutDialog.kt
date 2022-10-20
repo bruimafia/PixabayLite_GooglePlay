@@ -2,18 +2,13 @@ package ru.bruimafia.pixabaylite.main
 
 import android.content.ActivityNotFoundException
 import android.content.Intent
-import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.TextView
-import androidx.databinding.BindingAdapter
 import androidx.databinding.DataBindingUtil
-import androidx.databinding.ObservableField
 import androidx.fragment.app.DialogFragment
-import ru.bruimafia.pixabaylite.App
 import ru.bruimafia.pixabaylite.BuildConfig
 import ru.bruimafia.pixabaylite.R
 import ru.bruimafia.pixabaylite.databinding.DialogAboutBinding
@@ -22,9 +17,9 @@ import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 
 class AboutDialog : DialogFragment() {
 
-    val VK_ID = "31223368"
+    private val VK_ID = "31223368"
 
-    lateinit var bind: DialogAboutBinding
+    private lateinit var bind: DialogAboutBinding
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         bind = DataBindingUtil.inflate(inflater, R.layout.dialog_about, container, false)

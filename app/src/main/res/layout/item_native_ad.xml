@@ -13,7 +13,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:background="@color/grey_300"
+            android:background="@color/base_level1"
             android:minHeight="@dimen/_40sdp"
             android:orientation="vertical">
 
@@ -21,10 +21,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="start"
-                android:background="#FFCC66"
+                android:background="@color/yellow_200"
                 android:padding="@dimen/_1sdp"
                 android:text="@string/ad_info"
-                android:textColor="@color/white"
+                android:textColor="@color/black_medium"
                 android:textSize="@dimen/_10sdp" />
 
             <LinearLayout
@@ -45,7 +45,8 @@
                         android:layout_width="@dimen/_40sdp"
                         android:layout_height="@dimen/_40sdp"
                         android:layout_marginEnd="@dimen/_5sdp"
-                        android:adjustViewBounds="true" />
+                        android:adjustViewBounds="true"
+                        android:contentDescription="@string/app_name" />
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -56,7 +57,7 @@
                             android:id="@+id/ad_headline"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:textColor="#0000FF"
+                            android:textColor="@color/white_high"
                             android:textSize="@dimen/_14sdp"
                             android:textStyle="bold" />
 
@@ -70,6 +71,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="match_parent"
                                 android:gravity="bottom"
+                                android:textColor="@color/white_medium"
                                 android:textSize="@dimen/_12sdp"
                                 android:textStyle="bold" />
 
@@ -97,6 +99,7 @@
                         android:id="@+id/ad_body"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
+                        android:textColor="@color/white_medium"
                         android:textSize="@dimen/_10sdp" />
 
                     <com.google.android.gms.ads.nativead.MediaView
@@ -120,6 +123,7 @@
                             android:layout_height="wrap_content"
                             android:paddingStart="@dimen/_3sdp"
                             android:paddingEnd="@dimen/_3sdp"
+                            android:textColor="@color/white_medium"
                             android:textSize="@dimen/_10sdp" />
 
                         <TextView
@@ -128,6 +132,7 @@
                             android:layout_height="wrap_content"
                             android:paddingStart="@dimen/_3sdp"
                             android:paddingEnd="@dimen/_8sdp"
+                            android:textColor="@color/white_medium"
                             android:textSize="@dimen/_10sdp" />
 
                         <com.google.android.material.button.MaterialButton
@@ -135,7 +140,7 @@
                             style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:backgroundTint="@color/accent"
+                            android:backgroundTint="@color/accent_200"
                             android:gravity="center"
                             android:paddingStart="@dimen/_15sdp"
                             android:paddingTop="@dimen/_10sdp"

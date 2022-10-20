@@ -5,11 +5,11 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_margin="@dimen/_3sdp"
-    android:background="@color/background"
+    android:background="@color/base_level3"
     android:paddingStart="@dimen/_30sdp"
     android:paddingTop="@dimen/_5sdp"
     android:paddingEnd="@dimen/_30sdp"
     android:paddingBottom="@dimen/_5sdp"
-    android:textColor="@color/white"
+    android:textColor="@color/white_medium"
     android:textStyle="bold"
     tools:text="strange tag" />

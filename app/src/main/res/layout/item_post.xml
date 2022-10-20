@@ -10,35 +10,53 @@
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_margin="@dimen/_2sdp"
-        android:backgroundTint="@color/grey_300">
+        android:layout_marginStart="@dimen/_3sdp"
+        android:layout_marginTop="@dimen/_4sdp"
+        android:layout_marginEnd="@dimen/_3sdp"
+        android:layout_marginBottom="@dimen/_4sdp"
+        android:backgroundTint="@color/base_level1"
+        app:cardCornerRadius="@dimen/_3sdp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
 
-            <de.hdodenhof.circleimageview.CircleImageView
+            <com.google.android.material.imageview.ShapeableImageView
+                android:id="@+id/iv_image"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/_190sdp"
+                android:layout_margin="@dimen/_3sdp"
+                android:background="@color/base_level4"
+                android:scaleType="centerCrop"
+                app:layout_constraintBottom_toTopOf="@id/recycler"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize3DP" />
+
+            <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/iv_userPhoto"
                 android:layout_width="@dimen/_30sdp"
                 android:layout_height="@dimen/_30sdp"
                 android:layout_margin="@dimen/_3sdp"
+                android:padding="@dimen/_2sdp"
                 android:scaleType="centerCrop"
-                android:src="@color/grey_100"
-                app:civ_border_color="@color/white"
-                app:civ_border_width="2dp"
-                app:layout_constraintBottom_toTopOf="@id/iv_image"
+                android:src="@color/base_level6"
+                app:layout_constraintBottom_toBottomOf="@id/iv_image"
                 app:layout_constraintEnd_toStartOf="@id/tv_userName"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+                app:shapeAppearanceOverlay="@style/ShapeAppearanceOverlay.App.CornerSize50Percent"
+                app:strokeColor="@color/white_outline_surface"
+                app:strokeWidth="@dimen/_1sdp" />
 
             <TextView
                 android:id="@+id/tv_userName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/_8sdp"
+                android:layout_marginStart="@dimen/_7sdp"
+                android:textColor="@color/white_medium"
                 android:textSize="@dimen/_11sdp"
                 android:textStyle="bold"
-                android:textColor="@color/grey_700"
                 app:layout_constraintBottom_toBottomOf="@id/iv_userPhoto"
                 app:layout_constraintStart_toEndOf="@+id/iv_userPhoto"
                 app:layout_constraintTop_toTopOf="@id/iv_userPhoto"
@@ -52,8 +70,8 @@
                 android:layout_marginEnd="@dimen/_16sdp"
                 android:layout_toStartOf="@+id/tv_favorite"
                 android:gravity="center_horizontal"
+                android:textColor="@color/white_medium"
                 android:textSize="@dimen/_9sdp"
-                android:textColor="@color/grey_700"
                 app:drawableTopCompat="@drawable/ic_like"
                 app:layout_constraintBottom_toBottomOf="@id/iv_userPhoto"
                 app:layout_constraintEnd_toStartOf="@id/tv_favorite"
@@ -68,24 +86,13 @@
                 android:layout_centerVertical="true"
                 android:layout_marginEnd="@dimen/_8sdp"
                 android:gravity="center_horizontal"
+                android:textColor="@color/white_medium"
                 android:textSize="@dimen/_9sdp"
-                android:textColor="@color/grey_700"
                 app:drawableTopCompat="@drawable/ic_favorite"
                 app:layout_constraintBottom_toBottomOf="@id/iv_userPhoto"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@id/iv_userPhoto"
                 tools:text="2057" />
-
-            <ImageView
-                android:id="@+id/iv_image"
-                android:layout_width="match_parent"
-                android:layout_height="@dimen/_180sdp"
-                android:background="@color/white"
-                android:scaleType="centerCrop"
-                app:layout_constraintBottom_toTopOf="@id/recycler"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@id/iv_userPhoto" />
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/recycler"
@@ -106,8 +113,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/_5sdp"
                 android:layout_marginBottom="@dimen/_2sdp"
+                android:textColor="@color/white_medium"
                 android:textSize="@dimen/_10sdp"
-                android:textColor="@color/grey_700"
                 app:layout_constraintBottom_toTopOf="@id/tv_size"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/recycler"
@@ -116,11 +123,11 @@
             <TextView
                 android:id="@+id/tv_size"
                 android:layout_width="wrap_content"
-                android:textColor="@color/grey_700"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_marginStart="@dimen/_5sdp"
                 android:layout_marginBottom="@dimen/_2sdp"
+                android:textColor="@color/white_medium"
                 android:textSize="@dimen/_10sdp"
                 app:layout_constraintBottom_toTopOf="@id/tv_weight"
                 app:layout_constraintStart_toStartOf="parent"
@@ -133,8 +140,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/_5sdp"
                 android:layout_marginBottom="@dimen/_4sdp"
+                android:textColor="@color/white_medium"
                 android:textSize="@dimen/_10sdp"
-                android:textColor="@color/grey_700"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/tv_size"
@@ -146,7 +153,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/_8sdp"
-                android:backgroundTint="@color/accent"
+                android:backgroundTint="@color/accent_200"
                 android:paddingStart="@dimen/_15sdp"
                 android:paddingTop="@dimen/_10sdp"
                 android:paddingEnd="@dimen/_15sdp"

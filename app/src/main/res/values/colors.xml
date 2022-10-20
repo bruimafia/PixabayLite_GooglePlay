@@ -2,8 +2,29 @@
 <resources>
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
-    <color name="background">#292929</color>
+    <color name="base">#333333</color> <!-- 0% #00333333 -->
     <color name="accent">#57b057</color>
+    <color name="accent_200">#A9D6AA</color>
+    <color name="error">#CF6679</color>
+
+    <color name="base_level1">#3D3D3D</color> <!-- 5% #0D333333 -->
+    <color name="base_level2">#414141</color> <!-- 7% #12333333 -->
+    <color name="base_level3">#434343</color> <!-- 8% #14333333 -->
+    <color name="base_level4">#454545</color> <!-- 9% #17333333 -->
+    <color name="base_level6">#494949</color> <!-- 11% #1C333333 -->
+    <color name="base_level8">#4C4C4C</color> <!-- 12% #1F333333 -->
+    <color name="base_level12">#505050</color> <!-- 14% #24333333 -->
+    <color name="base_level16">#515151</color> <!-- 15% #26333333 -->
+    <color name="base_level24">#545454</color> <!-- 16% #29333333 -->
+
+    <color name="white_high">#DEFFFFFF</color> <!-- 87% -->
+    <color name="white_medium">#99FFFFFF</color> <!-- 60% -->
+    <color name="white_disabled">#61FFFFFF</color> <!-- 38% -->
+    <color name="white_outline_surface">#1FFFFFFF</color> <!-- 12% -->
+
+    <color name="black_high">#000000</color> <!-- 100% -->
+    <color name="black_medium">#BD000000</color> <!-- 74% -->
+    <color name="black_disabled">#61000000</color> <!-- 38% -->
 
     <!-- Material Design: Orange Color -->
     <color name="orange_50">#FFF3E0</color>

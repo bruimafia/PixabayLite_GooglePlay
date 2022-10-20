@@ -5,6 +5,7 @@
     <string name="size">Разрешение: %dx%d</string>
     <string name="weight">Размер: %.2f Мб</string>
     <string name="btn_save">Сохранить</string>
+    <string name="btn_thanks_info">Спасибо за информацию</string>
     <string name="menu_sort">Сортировка</string>
     <string name="menu_search">Поиск</string>
     <string name="image_saved">Изображение сохранено в папку PixabayLite</string>
@@ -18,7 +19,11 @@
     <string name="ad_info">Реклама</string>
     <string name="buy">Отключить рекламу</string>
     <string name="about_app">О программе</string>
+    <string name="up">Вверх</string>
+    <string name="contentDesc_vk">Ссылка на Vkontakte</string>
+    <string name="contentDesc_gp">Ссылка на Google Play</string>
     <string name="tv_about_app">«Pixabay Lite» – это облегченная версия приложения для доступа к изображениям сервиса Pixabay. Скачивайте и ищите самые свежие и самые популярные изображения в пару кликов.</string>
     <string name="tv_privacy_policy">Политика конфиденциальности</string>
     <string name="snackbar_reset_app">Отлично, теперь для полноценной работы перезапустите приложение</string>
+    <string name="info_about_closed_access">2 июня 2022 года сервис стоковых фотографий Pixabay закрыл доступ для пользователей из РФ. Если у вас наблюдаются проблемы с загрузкой изображений, пожалуйста, используйте VPN. Не ставьте плохую оценку приложению, мы в этом не виноваты. Спасибо за понимание!</string>
 </resources>

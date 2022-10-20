@@ -1,13 +1,9 @@
 package ru.bruimafia.pixabaylite.main
 
 import android.Manifest
-import android.app.Dialog
 import android.app.SearchManager
-import android.content.ActivityNotFoundException
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.media.MediaScannerConnection
-import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.util.Log
@@ -27,6 +23,7 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.play.core.appupdate.AppUpdateManager
@@ -68,6 +65,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
     private var adapter: ImageAdapter = ImageAdapter()
     private lateinit var disposable: Disposable
     private lateinit var searchView: SearchView
+    private lateinit var bottomSheetDialog: BottomSheetDialog
     private var googleInterstitialAd: InterstitialAd? = null
     private var yandexInterstitialAd: YandexInterstitialAd? = null
     private lateinit var bp: BillingProcessor
@@ -132,6 +130,24 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             }
         })
 
+        if (SharedPreferencesManager.isFirstLaunch)
+            showAlertDialog()
+
+    }
+
+    // сервис в РФ заблокирован
+    private fun showAlertDialog() {
+
+        val view = layoutInflater.inflate(R.layout.bottom_sheet, null)
+        bottomSheetDialog = BottomSheetDialog(this, R.style.BottomSheetDialogTheme)
+
+        view.findViewById<MaterialButton>(R.id.btn_ok).setOnClickListener {
+            SharedPreferencesManager.isFirstLaunch = false
+            bottomSheetDialog.dismiss()
+        }
+
+        bottomSheetDialog.setContentView(view)
+        bottomSheetDialog.show()
     }
 
     // проверка разрешений
@@ -197,7 +213,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             override fun onQueryTextSubmit(newText: String?): Boolean {
                 query = newText ?: ""
                 page = 1
-                bind.progressBar.visibility = View.VISIBLE;
+                bind.progressBar.visibility = View.VISIBLE
                 loadData(query, order, page)
                 return false
             }
@@ -205,7 +221,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             override fun onQueryTextChange(newText: String?): Boolean {
                 query = newText ?: ""
                 page = 1
-                bind.progressBar.visibility = View.VISIBLE;
+                bind.progressBar.visibility = View.VISIBLE
                 loadData(query, order, page)
                 return false
             }

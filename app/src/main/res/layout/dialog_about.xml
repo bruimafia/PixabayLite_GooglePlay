@@ -23,16 +23,17 @@
         <ImageView
             android:layout_width="@dimen/_100sdp"
             android:layout_height="@dimen/_100sdp"
-            android:padding="@dimen/_10sdp"
+            android:contentDescription="@string/app_name"
+            android:padding="@dimen/_22sdp"
             android:scaleType="centerCrop"
-            app:srcCompat="@mipmap/ic_launcher" />
+            app:srcCompat="@drawable/logo" />
 
         <TextView
             android:id="@+id/tv_appVersion"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textColor="@color/white"
+            android:textColor="@color/white_high"
             android:textSize="@dimen/_12sdp"
             tools:text="версия 1.0.5 pro (сборка 22)" />
 
@@ -42,7 +43,7 @@
             android:layout_marginTop="@dimen/_5sdp"
             android:gravity="center"
             android:text="@string/tv_about_app"
-            android:textColor="@color/white"
+            android:textColor="@color/white_high"
             android:textSize="@dimen/_12sdp" />
 
         <LinearLayout
@@ -57,6 +58,7 @@
                 android:id="@+id/img_vkLink"
                 android:layout_width="@dimen/_50sdp"
                 android:layout_height="@dimen/_50sdp"
+                android:contentDescription="@string/contentDesc_vk"
                 android:onClick="@{v -> view.onVkLink()}"
                 android:padding="@dimen/_5sdp"
                 app:srcCompat="@drawable/ic_link_vk" />
@@ -65,6 +67,7 @@
                 android:id="@+id/img_googleplayLink"
                 android:layout_width="@dimen/_50sdp"
                 android:layout_height="@dimen/_50sdp"
+                android:contentDescription="@string/contentDesc_gp"
                 android:onClick="@{v -> view.onGoogleplayLink()}"
                 android:padding="@dimen/_10sdp"
                 app:srcCompat="@drawable/ic_link_googleplay" />
@@ -78,7 +81,7 @@
             android:gravity="center"
             android:onClick="@{v -> view.onPrivacyPolicyLink()}"
             android:text="@string/tv_privacy_policy"
-            android:textColor="@color/white"
+            android:textColor="@color/white_medium"
             android:textSize="@dimen/_12sdp" />
 
         <TextView
@@ -86,7 +89,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="@string/tv_copyright"
-            android:textColor="@color/white"
+            android:textColor="@color/white_medium"
             android:textSize="@dimen/_12sdp" />
 
     </LinearLayout>

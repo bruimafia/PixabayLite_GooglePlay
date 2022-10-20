@@ -2,26 +2,42 @@
     <!-- Base application theme. -->
     <style name="Theme.PixabayLite" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <!-- Primary brand color. -->
-        <item name="colorPrimary">@color/background</item>
-        <item name="colorPrimaryVariant">@color/background</item>
-        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorPrimary">@color/base</item>
+        <item name="colorPrimaryVariant">@color/base</item>
+        <item name="colorOnPrimary">@color/black</item>
         <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/accent</item>
-        <item name="colorSecondaryVariant">@color/accent</item>
-        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorSecondary">@color/accent_200</item>
+        <item name="colorSecondaryVariant">@color/accent_200</item>
+        <item name="colorOnSecondary">@color/black</item>
         <!-- Customize your theme here. -->
-        <item name="android:statusBarColor" tools:targetApi="21">?attr/colorPrimaryVariant</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
         <item name="android:colorBackground">?attr/colorPrimary</item>
         <item name="android:windowLightStatusBar" tools:targetApi="23">false</item>
-        <item name="android:navigationBarColor" tools:targetApi="21">?attr/colorPrimary</item>
+        <item name="android:navigationBarColor">?attr/colorPrimary</item>
         <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
-        <item name="android:panelFullBackground">@color/background</item>
-        <item name="android:itemBackground">@color/background</item>
+        <item name="android:panelFullBackground">@color/base</item>
+        <item name="android:itemBackground">@color/base</item>
         <item name="actionOverflowMenuStyle">@style/CMOptionsMenu</item>
     </style>
 
     <style name="CMOptionsMenu" parent="Widget.AppCompat.PopupMenu.Overflow">
-        <item name="android:popupBackground">@color/background</item>
+        <item name="android:popupBackground">@color/base</item>
+    </style>
+
+    <style name="BottomSheetStyle" parent="Widget.Design.BottomSheet.Modal">
+        <item name="android:background">@android:color/transparent</item>
+    </style>
+
+    <style name="BottomSheetDialogTheme" parent="Theme.Design.Light.BottomSheetDialog">
+        <item name="bottomSheetStyle">@style/BottomSheetStyle</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.App.CornerSize3DP" parent="">
+        <item name="cornerSize">@dimen/_3sdp</item>
+    </style>
+
+    <style name="ShapeAppearanceOverlay.App.CornerSize50Percent" parent="">
+        <item name="cornerSize">50%</item>
     </style>
 
 </resources>
