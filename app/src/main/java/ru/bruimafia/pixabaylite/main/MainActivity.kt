@@ -2,15 +2,21 @@ package ru.bruimafia.pixabaylite.main
 
 import android.Manifest
 import android.app.SearchManager
+import android.content.ContentValues
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.media.MediaScannerConnection
+import android.os.Build
 import android.os.Bundle
 import android.os.Environment
+import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.SearchView
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.databinding.DataBindingUtil
@@ -54,6 +60,8 @@ import ru.bruimafia.pixabaylite.databinding.ActivityMainBinding
 import ru.bruimafia.pixabaylite.model.Image
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import java.io.File
+import java.io.OutputStream
+import java.util.Objects
 
 
 class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
@@ -317,7 +325,9 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             .subscribe(
                 {
                     GlobalScope.launch {
-                        if (saveFile(it.body()!!, url))
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && saveFileWithAPI29(it.body()!!, url))
+                            showMessage(getString(R.string.image_saved))
+                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && saveFileBeforeAPI29(it.body()!!, url))
                             showMessage(getString(R.string.image_saved))
                     }
                 },
@@ -325,8 +335,45 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             )
     }
 
-    // сохранение файла
-    private fun saveFile(body: ResponseBody, name: String): Boolean {
+    // сохранение файла API>=29
+    @RequiresApi(Build.VERSION_CODES.Q)
+    private fun saveFileWithAPI29(body: ResponseBody, name: String): Boolean {
+
+        val fos: OutputStream
+        val bmp = BitmapFactory.decodeStream(body.byteStream())
+
+        try {
+            val contentValues = ContentValues().apply {
+                put(MediaStore.Images.Media.DISPLAY_NAME, "pixabaylite_$name.jpg")
+                put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
+                put(
+                    MediaStore.Images.Media.RELATIVE_PATH,
+                    Environment.DIRECTORY_PICTURES + File.separator + "PixabayLite"
+                )
+            }
+
+            val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
+            fos = contentResolver.openOutputStream(Objects.requireNonNull(imageUri)!!)!!
+
+            try {
+                bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+                Objects.requireNonNull(fos)
+            } catch (e: Exception) {
+                println(e.toString())
+            } finally {
+                fos.close()
+            }
+
+            return true
+        } catch (e: Exception) {
+            println(e.toString())
+        }
+
+        return false
+    }
+
+    // сохранение файла API<29
+    private fun saveFileBeforeAPI29(body: ResponseBody, name: String): Boolean {
         try {
             val mediaStorageDir = File(Environment.getExternalStorageDirectory(), "PixabayLite")
             if (!mediaStorageDir.exists()) {
@@ -335,9 +382,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             }
 
             val file = File(mediaStorageDir, "pixabaylite_$name")
-
-            val inputStream = body.byteStream()
-            inputStream.use { input ->
+            body.byteStream().use { input ->
                 file.outputStream().use { output -> input.copyTo(output) }
             }
 
