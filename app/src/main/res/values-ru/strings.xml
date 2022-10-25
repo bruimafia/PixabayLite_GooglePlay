@@ -8,10 +8,11 @@
     <string name="btn_thanks_info">Спасибо за информацию</string>
     <string name="menu_sort">Сортировка</string>
     <string name="menu_search">Поиск</string>
-    <string name="image_saved">Изображение сохранено в папку PixabayLite</string>
     <string name="sort_by_popular">Показаны самые популярные изображения</string>
     <string name="sort_by_latest">Показаны самые новые изображения</string>
-    <string name="download_started">Началась загрузка изображения</string>
+    <string name="download_started">Изображение будет сохранено в папку PixabayLite</string>
+    <string name="download_process">Загрузка изображения…</string>
+    <string name="download_complete">Загрузка завершена</string>
     <string name="error_create_folder">Ошибка при создании папки</string>
     <string name="request_for_evaluation">Мы всегда стремимся доводить наши продукты до идеала. Поэтому будем очень благодарны за Ваши оценку, отзыв и предложения. Спасибо!</string>
     <string name="rate_now">Оценить</string>

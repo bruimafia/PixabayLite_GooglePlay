@@ -9,8 +9,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.DialogFragment
-import ru.bruimafia.pixabaylite.BuildConfig
 import ru.bruimafia.pixabaylite.R
+import ru.bruimafia.pixabaylite.BuildConfig
 import ru.bruimafia.pixabaylite.databinding.DialogAboutBinding
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 

@@ -14,8 +14,8 @@ android {
         applicationId "ru.bruimafia.pixabaylite"
         minSdk 21
         targetSdk 33
-        versionCode 22
-        versionName "1.4.1"
+        versionCode 23
+        versionName "1.5"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "pixabay_lite-$versionName-code$versionCode")
@@ -61,8 +61,7 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'// RxJava
     implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
     implementation 'com.squareup.picasso:picasso:2.71828' // Picasso
-    implementation 'com.intuit.sdp:sdp-android:1.1.0'
-    // SDP - a scalable size unit / аналог папок dimens
+    implementation 'com.intuit.sdp:sdp-android:1.1.0' // SDP - a scalable size unit / аналог папок dimens
     implementation 'com.onesignal:OneSignal:4.8.2' // OneSignal
     implementation 'com.yandex.android:mobileads:5.3.2' // Yandex Mobile Ads
     implementation 'com.yandex.android:mobmetricalib:5.2.0' // Yandex AppMetrica SDK
@@ -72,5 +71,6 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics-ktx' // Google Analytics library
     implementation 'com.google.firebase:firebase-crashlytics-ktx' // Google Crashlytics library
     implementation 'com.google.firebase:firebase-messaging-ktx' // Firebase Cloud Messaging
-    implementation 'com.anjlab.android.iab.v3:library:2.0.3' // // In-App purchase. Внутриигровые покупки
+    implementation 'com.anjlab.android.iab.v3:library:2.0.3' // In-App purchase. Внутриигровые покупки
+    implementation 'com.github.stfalcon-studio:StfalconImageViewer:v1.0.1' // Stfalcon ImageViewer
 }

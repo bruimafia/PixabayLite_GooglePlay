@@ -1,12 +1,15 @@
 package ru.bruimafia.pixabaylite.main
 
 import android.Manifest
+import android.app.DownloadManager
 import android.app.SearchManager
 import android.content.ContentValues
+import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaScannerConnection
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -19,6 +22,8 @@ import android.widget.SearchView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.databinding.DataBindingUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.anjlab.android.iab.v3.BillingProcessor
@@ -52,6 +57,7 @@ import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import ru.bruimafia.pixabaylite.BuildConfig
 import ru.bruimafia.pixabaylite.R
 import ru.bruimafia.pixabaylite.adapter.ImageAdapter
 import ru.bruimafia.pixabaylite.api.ApiClient
@@ -68,6 +74,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
 
     private var TAG = "TESTADS"
 
+    private lateinit var notificationBuilder: NotificationCompat.Builder
     private lateinit var bind: ActivityMainBinding
     private lateinit var appUpdateManager: AppUpdateManager
     private var adapter: ImageAdapter = ImageAdapter()
@@ -312,6 +319,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
     // скачивание файла
     private fun downloadFile(url: String) {
         showMessage(getString(R.string.download_started))
+        startNotificationDownload()
         disposable = Retrofit.Builder()
             .client(OkHttpClient.Builder().build())
             .addConverterFactory(GsonConverterFactory.create())
@@ -325,10 +333,11 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             .subscribe(
                 {
                     GlobalScope.launch {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && saveFileWithAPI29(it.body()!!, url))
-                            showMessage(getString(R.string.image_saved))
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && saveFileBeforeAPI29(it.body()!!, url))
-                            showMessage(getString(R.string.image_saved))
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+                            saveFileWithAPI29(it.body()!!, url)
+                        else
+                            saveFileBeforeAPI29(it.body()!!, url)
+                        stopNotificationDownload()
                     }
                 },
                 { throwable -> showMessage(throwable.message) }
@@ -344,7 +353,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
 
         try {
             val contentValues = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, "pixabaylite_$name.jpg")
+                put(MediaStore.Images.Media.DISPLAY_NAME, "pixabaylite_" + System.currentTimeMillis() + ".jpg")
                 put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
                 put(
                     MediaStore.Images.Media.RELATIVE_PATH,
@@ -381,7 +390,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
                     showMessage(getString(R.string.error_create_folder))
             }
 
-            val file = File(mediaStorageDir, "pixabaylite_$name")
+            val file = File(mediaStorageDir, "pixabaylite_" + System.currentTimeMillis() + ".jpg")
             body.byteStream().use { input ->
                 file.outputStream().use { output -> input.copyTo(output) }
             }
@@ -423,7 +432,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
                 googleInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdDismissedFullScreenContent() {
                         Log.d(TAG, "Ad was dismissed.")
-                        showMessage(getString(R.string.image_saved))
+                        showMessage(getString(R.string.download_started))
                         googleInterstitialAd = null
                         initGoogleAdsInterstitial()
                     }
@@ -522,5 +531,47 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
     }
 
     override fun onBillingInitialized() {}
+
+    // запуск уведомления о скачивании файла
+    private fun startNotificationDownload() {
+        notificationBuilder = NotificationCompat.Builder(this, BuildConfig.APPLICATION_ID).apply {
+            setContentTitle(getString(R.string.download_process))
+            setSmallIcon(R.drawable.ic_download)
+            priority = NotificationCompat.PRIORITY_LOW
+        }
+
+        NotificationManagerCompat.from(this).apply {
+            notificationBuilder.setProgress(0, 0, true)
+            notify(1, notificationBuilder.build())
+        }
+    }
+
+    // остановка уведомления о скачивании файла
+    private fun stopNotificationDownload() {
+        NotificationManagerCompat.from(this).apply {
+            notificationBuilder.setContentText(getString(R.string.download_complete))
+                .setProgress(0, 0, false)
+            notify(1, notificationBuilder.build())
+            cancel(1)
+        }
+    }
+
+    // не работает с включенным VPN
+    private fun downloadFileWithDM(url: String) {
+        val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+        val request = DownloadManager.Request(Uri.parse(url))
+        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE or DownloadManager.Request.NETWORK_WIFI)
+            .setTitle("Загрузка изображения")
+            .setMimeType("image/jpg")
+            .setAllowedOverRoaming(true)
+            .setAllowedOverMetered(true)
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            .setDestinationInExternalPublicDir(
+                Environment.DIRECTORY_PICTURES,
+                File.separator + "PixabayLite" + File.separator + "pixabaylite_" + System.currentTimeMillis() + ".jpg"
+            )
+        downloadManager.enqueue(request)
+        showMessage("Изображение будет сохранено в папку PixabayLite")
+    }
 
 }

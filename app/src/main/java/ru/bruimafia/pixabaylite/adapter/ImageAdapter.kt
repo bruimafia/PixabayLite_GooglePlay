@@ -17,6 +17,7 @@ import com.google.android.gms.ads.nativead.MediaView
 import com.google.android.gms.ads.nativead.NativeAd
 import com.google.android.gms.ads.nativead.NativeAdView
 import com.squareup.picasso.Picasso
+import com.stfalcon.imageviewer.StfalconImageViewer
 import ru.bruimafia.pixabaylite.R
 import ru.bruimafia.pixabaylite.databinding.ItemPostBinding
 import ru.bruimafia.pixabaylite.databinding.LayoutAdBinding
@@ -82,7 +83,8 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder.itemViewType == ITEM_VIEW) {
-            val pos = if (SharedPreferencesManager.isFullVersion) position else position - (position / ITEM_FEED_COUNT)
+            var pos = if (SharedPreferencesManager.isFullVersion) position else position - (position / ITEM_FEED_COUNT)
+            if (pos >= list.size) pos = list.size - 1 // иначе ошибка при быстром пролистывании
             (holder as ImageViewHolder).bind(list[pos])
         } else
             (holder as AdViewHolder).bind()
@@ -146,6 +148,15 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
                 tagAdapter.setClickTagListener(object : TagAdapter.OnClickTagListener {
                     override fun onClick(title: String) = onSearchTagListener.onSearch(title)
                 })
+
+                ivImage.setOnClickListener {
+                    StfalconImageViewer.Builder(binding.root.context, listOf(image)) { view, image ->
+                        Picasso.get().load(image.fullHDURL).placeholder(R.drawable.logo).into(view)
+                    }.withHiddenStatusBar(false)
+                        .withTransitionFrom(ivImage)
+                        .withBackgroundColorResource(R.color.base)
+                        .show()
+                }
             }
         }
 
@@ -189,7 +200,7 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
             (adView.headlineView as TextView).text = nativeAd.headline
             adView.mediaView!!.setMediaContent(nativeAd.mediaContent!!)
             if (nativeAd.body == null) {
-                adView.bodyView!!.visibility  = View.INVISIBLE
+                adView.bodyView!!.visibility = View.INVISIBLE
             } else {
                 adView.bodyView!!.visibility = View.VISIBLE
                 (adView.bodyView as TextView).text = nativeAd.body
