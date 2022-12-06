@@ -421,9 +421,6 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 Log.d(TAG, adError.message)
                 googleInterstitialAd = null
-                // если с google ошибка, то тогда показываем рекламу Яндекс
-                if (yandexInterstitialAd?.isLoaded == true)
-                    yandexInterstitialAd?.show()
             }
 
             override fun onAdLoaded(interstitialAd: InterstitialAd) {
@@ -440,6 +437,9 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
                     override fun onAdFailedToShowFullScreenContent(adError: AdError) {
                         Log.d(TAG, "Ad failed to show.")
                         googleInterstitialAd = null
+                        // если с google ошибка, то тогда показываем рекламу Яндекс
+                        if (yandexInterstitialAd?.isLoaded == true)
+                            yandexInterstitialAd?.show()
                     }
 
                     override fun onAdShowedFullScreenContent() {

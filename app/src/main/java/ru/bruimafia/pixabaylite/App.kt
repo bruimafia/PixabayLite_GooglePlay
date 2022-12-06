@@ -14,6 +14,7 @@ import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import com.yandex.mobile.ads.common.MobileAds as YandexMobileAds
 
 
+
 class App : Application() {
 
     override fun onCreate() {
@@ -26,7 +27,6 @@ class App : Application() {
         OneSignal.setLogLevel(OneSignal.LOG_LEVEL.VERBOSE, OneSignal.LOG_LEVEL.NONE)
         OneSignal.initWithContext(this)
         OneSignal.setAppId(getString(R.string.onesignal_app_id))
-
 
         // Google Mobile Ads
         MobileAds.initialize(this)
