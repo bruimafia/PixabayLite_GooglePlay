@@ -72,7 +72,7 @@ import java.util.Objects
 
 class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
 
-    private var TAG = "TESTADS"
+    private var TAG = "ADS"
 
     private lateinit var notificationBuilder: NotificationCompat.Builder
     private lateinit var bind: ActivityMainBinding
@@ -152,7 +152,6 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
 
     // сервис в РФ заблокирован
     private fun showAlertDialog() {
-
         val view = layoutInflater.inflate(R.layout.bottom_sheet, null)
         bottomSheetDialog = BottomSheetDialog(this, R.style.BottomSheetDialogTheme)
 
@@ -409,41 +408,44 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
     private fun showAdsInterstitial() {
         if (googleInterstitialAd != null && !SharedPreferencesManager.isFullVersion)
             googleInterstitialAd?.show(this)
+        else if (googleInterstitialAd == null && yandexInterstitialAd?.isLoaded == true && !SharedPreferencesManager.isFullVersion)
+            yandexInterstitialAd?.show()
         else
-            Log.d(TAG, "The interstitial ad wasn't ready yet.")
+            Log.d(TAG, "Google & Yandex: the interstitial ad wasn't ready yet")
     }
 
     // инициализация межстраничной Google рекламы в приложении
     private fun initGoogleAdsInterstitial() {
         val adRequest = AdRequest.Builder().build()
 
-        InterstitialAd.load(this, getString(R.string.ads_interstitialAd_id), adRequest, object : InterstitialAdLoadCallback() {
+        InterstitialAd.load(this, getString(R.string.ads_google_interstitialAd_id), adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
-                Log.d(TAG, adError.message)
+                Log.d(TAG, "Google (onAdFailedToLoad): " + adError.message)
                 googleInterstitialAd = null
             }
 
             override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                Log.d(TAG, "Ad was loaded.")
+                Log.d(TAG, "Google: onAdLoaded")
                 googleInterstitialAd = interstitialAd
                 googleInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
                     override fun onAdDismissedFullScreenContent() {
-                        Log.d(TAG, "Ad was dismissed.")
+                        Log.d(TAG, "Google: onAdDismissedFullScreenContent")
                         showMessage(getString(R.string.download_started))
                         googleInterstitialAd = null
                         initGoogleAdsInterstitial()
                     }
 
                     override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                        Log.d(TAG, "Ad failed to show.")
+                        Log.d(TAG, "Google: onAdFailedToShowFullScreenContent")
                         googleInterstitialAd = null
+                        initGoogleAdsInterstitial()
                         // если с google ошибка, то тогда показываем рекламу Яндекс
                         if (yandexInterstitialAd?.isLoaded == true)
                             yandexInterstitialAd?.show()
                     }
 
                     override fun onAdShowedFullScreenContent() {
-                        Log.d(TAG, "Ad showed fullscreen content.")
+                        Log.d(TAG, "Google: onAdShowedFullScreenContent")
                     }
                 }
 
@@ -458,36 +460,39 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
         yandexInterstitialAd?.loadAd(YandexAdRequest.Builder().build())
         yandexInterstitialAd?.setInterstitialAdEventListener(object : InterstitialAdEventListener {
             override fun onAdLoaded() {
-                Log.d(TAG, "onAdLoaded")
+                Log.d(TAG, "Yandex: onAdLoaded")
             }
 
             override fun onAdFailedToLoad(adRequestError: AdRequestError) {
-                Log.d(TAG, adRequestError.description)
+                Log.d(TAG, "Yandex (onAdFailedToLoad): " + adRequestError.description)
+                yandexInterstitialAd = null
+                initYandexAdsInterstitial()
             }
 
             override fun onImpression(impressionData: ImpressionData?) {
-                Log.d(TAG, "onImpression")
+                Log.d(TAG, "Yandex: onImpression")
             }
 
             override fun onAdShown() {
-                Log.d(TAG, "onAdShown")
+                Log.d(TAG, "Yandex: onAdShown")
             }
 
             override fun onAdDismissed() {
-                Log.d(TAG, "onAdDismissed")
-                yandexInterstitialAd?.loadAd(com.yandex.mobile.ads.common.AdRequest.Builder().build())
+                Log.d(TAG, "Yandex: onAdDismissed")
+                yandexInterstitialAd = null
+                initYandexAdsInterstitial()
             }
 
             override fun onAdClicked() {
-                Log.d(TAG, "onAdClicked")
+                Log.d(TAG, "Yandex: onAdClicked")
             }
 
             override fun onLeftApplication() {
-                Log.d(TAG, "onLeftApplication")
+                Log.d(TAG, "Yandex: onLeftApplication")
             }
 
             override fun onReturnedToApplication() {
-                Log.d(TAG, "onReturnedToApplication")
+                Log.d(TAG, "Yandex: onReturnedToApplication")
             }
 
         })

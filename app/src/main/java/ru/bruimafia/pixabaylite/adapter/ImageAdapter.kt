@@ -166,7 +166,7 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
 
         fun bind() {
             binding.apply {
-                val builder = AdLoader.Builder(root.context, root.resources.getString(R.string.ads_nativeAd_id))
+                val builder = AdLoader.Builder(root.context, root.resources.getString(R.string.ads_google_nativeAd_id))
                     .forNativeAd { nativeAd ->
                         val adView = LayoutInflater.from(root.context).inflate(R.layout.item_native_ad, null) as NativeAdView
                         populateNativeAdView(nativeAd, adView)

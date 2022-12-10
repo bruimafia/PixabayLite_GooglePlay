@@ -22,7 +22,6 @@ class App : Application() {
         instance = this
         SharedPreferencesManager.init(this)
 
-        // Logging set to help debug issues, remove before releasing your app.
         // OneSignal Initialization
         OneSignal.setLogLevel(OneSignal.LOG_LEVEL.VERBOSE, OneSignal.LOG_LEVEL.NONE)
         OneSignal.initWithContext(this)
@@ -32,7 +31,7 @@ class App : Application() {
         MobileAds.initialize(this)
 
         // Yandex Mobile Ads
-        YandexMobileAds.initialize(this) { Log.d("TESTADS", "SDK initialized") }
+        YandexMobileAds.initialize(this) { Log.d("ADS", "YandexMobileAds: SDK initialized") }
 
         // Yandex AppMetrica
         val config: YandexMetricaConfig = YandexMetricaConfig.newConfigBuilder(getString(R.string.appMetrica_api_key)).build()
