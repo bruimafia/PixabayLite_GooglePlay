@@ -25,7 +25,7 @@
                 android:padding="@dimen/_1sdp"
                 android:text="@string/ad_info"
                 android:textColor="@color/black_medium"
-                android:textSize="@dimen/_10sdp" />
+                android:textSize="@dimen/_10ssp" />
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -58,7 +58,7 @@
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:textColor="@color/white_high"
-                            android:textSize="@dimen/_14sdp"
+                            android:textSize="@dimen/_14ssp"
                             android:textStyle="bold" />
 
                         <LinearLayout
@@ -72,7 +72,7 @@
                                 android:layout_height="match_parent"
                                 android:gravity="bottom"
                                 android:textColor="@color/white_medium"
-                                android:textSize="@dimen/_12sdp"
+                                android:textSize="@dimen/_12ssp"
                                 android:textStyle="bold" />
 
                             <RatingBar
@@ -100,7 +100,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textColor="@color/white_medium"
-                        android:textSize="@dimen/_10sdp" />
+                        android:textSize="@dimen/_10ssp" />
 
                     <com.google.android.gms.ads.nativead.MediaView
                         android:id="@+id/ad_media"
@@ -124,7 +124,7 @@
                             android:paddingStart="@dimen/_3sdp"
                             android:paddingEnd="@dimen/_3sdp"
                             android:textColor="@color/white_medium"
-                            android:textSize="@dimen/_10sdp" />
+                            android:textSize="@dimen/_10ssp" />
 
                         <TextView
                             android:id="@+id/ad_store"
@@ -133,7 +133,7 @@
                             android:paddingStart="@dimen/_3sdp"
                             android:paddingEnd="@dimen/_8sdp"
                             android:textColor="@color/white_medium"
-                            android:textSize="@dimen/_10sdp" />
+                            android:textSize="@dimen/_10ssp" />
 
                         <com.google.android.material.button.MaterialButton
                             android:id="@+id/ad_call_to_action"

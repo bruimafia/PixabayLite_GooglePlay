@@ -14,8 +14,8 @@ android {
         applicationId "ru.bruimafia.pixabaylite"
         minSdk 21
         targetSdk 33
-        versionCode 25
-        versionName "1.6.1"
+        versionCode 26
+        versionName "1.6.2"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "pixabay_lite-$versionName-code$versionCode")
@@ -62,6 +62,7 @@ dependencies {
     implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
     implementation 'com.squareup.picasso:picasso:2.71828' // Picasso
     implementation 'com.intuit.sdp:sdp-android:1.1.0' // SDP - a scalable size unit / аналог папок dimens
+    implementation 'com.intuit.ssp:ssp-android:1.1.0' // SDP - a scalable size unit for text / аналог папок dimens
     implementation 'com.onesignal:OneSignal:4.8.3' // OneSignal
     implementation 'com.yandex.android:mobileads:5.4.1' // Yandex Mobile Ads
     implementation 'com.yandex.android:mobmetricalib:5.2.0' // Yandex AppMetrica SDK

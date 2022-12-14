@@ -34,7 +34,7 @@
             android:text="@string/info_about_closed_access"
             android:textAlignment="center"
             android:textColor="@color/white_high"
-            android:textSize="@dimen/_12sdp"
+            android:textSize="@dimen/_12ssp"
             app:layout_constraintBottom_toTopOf="@id/btn_ok"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"

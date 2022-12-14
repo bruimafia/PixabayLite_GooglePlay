@@ -34,7 +34,7 @@
             android:layout_height="wrap_content"
             android:gravity="center"
             android:textColor="@color/white_high"
-            android:textSize="@dimen/_12sdp"
+            android:textSize="@dimen/_12ssp"
             tools:text="версия 1.0.5 pro (сборка 22)" />
 
         <TextView
@@ -44,7 +44,7 @@
             android:gravity="center"
             android:text="@string/tv_about_app"
             android:textColor="@color/white_high"
-            android:textSize="@dimen/_12sdp" />
+            android:textSize="@dimen/_12ssp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -82,7 +82,7 @@
             android:onClick="@{v -> view.onPrivacyPolicyLink()}"
             android:text="@string/tv_privacy_policy"
             android:textColor="@color/white_medium"
-            android:textSize="@dimen/_12sdp" />
+            android:textSize="@dimen/_12ssp" />
 
         <TextView
             android:layout_width="wrap_content"
@@ -90,7 +90,7 @@
             android:gravity="center"
             android:text="@string/tv_copyright"
             android:textColor="@color/white_medium"
-            android:textSize="@dimen/_12sdp" />
+            android:textSize="@dimen/_12ssp" />
 
     </LinearLayout>
 </layout>
