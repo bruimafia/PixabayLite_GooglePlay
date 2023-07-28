@@ -13,8 +13,6 @@ import com.yandex.metrica.YandexMetricaConfig
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import com.yandex.mobile.ads.common.MobileAds as YandexMobileAds
 
-
-
 class App : Application() {
 
     override fun onCreate() {
