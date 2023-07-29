@@ -7,10 +7,12 @@ import android.content.Context
 import android.os.Build
 import android.util.Log
 import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.onesignal.OneSignal
 import com.yandex.metrica.YandexMetrica
 import com.yandex.metrica.YandexMetricaConfig
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
+import java.util.Arrays
 import com.yandex.mobile.ads.common.MobileAds as YandexMobileAds
 
 class App : Application() {
@@ -26,7 +28,7 @@ class App : Application() {
         OneSignal.setAppId(getString(R.string.onesignal_app_id))
 
         // Google Mobile Ads
-        MobileAds.initialize(this)
+        //MobileAds.initialize(this)
 
         // Yandex Mobile Ads
         YandexMobileAds.initialize(this) { Log.d("ADS", "YandexMobileAds: SDK initialized") }

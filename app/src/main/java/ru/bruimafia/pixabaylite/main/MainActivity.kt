@@ -6,6 +6,7 @@ import android.app.SearchManager
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaScannerConnection
@@ -14,6 +15,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.provider.Settings
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -32,6 +34,7 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.material.bottomsheet.BottomSheetDialog
@@ -42,11 +45,12 @@ import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
 import com.google.android.play.core.review.ReviewManagerFactory
-import com.yandex.mobile.ads.interstitial.InterstitialAd as YandexInterstitialAd
-import com.yandex.mobile.ads.common.AdRequest as YandexAdRequest
+import com.google.android.ump.ConsentDebugSettings
+import com.google.android.ump.ConsentInformation
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.UserMessagingPlatform
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
-import com.yandex.mobile.ads.common.AdRequestError
-import com.yandex.mobile.ads.common.ImpressionData
+import com.yandex.mobile.ads.banner.AdSize
 import com.yandex.mobile.ads.interstitial.InterstitialAdEventListener
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
@@ -68,12 +72,21 @@ import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import java.io.File
 import java.io.OutputStream
 import java.util.Objects
+import java.util.concurrent.atomic.AtomicBoolean
+import com.yandex.mobile.ads.banner.BannerAdEventListener as YandexBannerAdEventListener
+import com.yandex.mobile.ads.banner.BannerAdView as YandexBannerAdView
+import com.yandex.mobile.ads.common.AdRequest as YandexAdRequest
+import com.yandex.mobile.ads.common.AdRequestError as YandexAdRequestError
+import com.yandex.mobile.ads.common.ImpressionData as YandexImpressionData
+import com.yandex.mobile.ads.interstitial.InterstitialAd as YandexInterstitialAd
 
 
 class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
 
     private var TAG = "ADS"
 
+    //private lateinit var consentInformation: ConsentInformation
+    private var isMobileAdsInitializeCalled = AtomicBoolean(false)
     private lateinit var notificationBuilder: NotificationCompat.Builder
     private lateinit var bind: ActivityMainBinding
     private lateinit var appUpdateManager: AppUpdateManager
@@ -81,8 +94,9 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
     private lateinit var disposable: Disposable
     private lateinit var searchView: SearchView
     private lateinit var bottomSheetDialog: BottomSheetDialog
-    private var googleInterstitialAd: InterstitialAd? = null
+    //private var googleInterstitialAd: InterstitialAd? = null
     private var yandexInterstitialAd: YandexInterstitialAd? = null
+    private var bannerAd: YandexBannerAdView? = null
     private lateinit var bp: BillingProcessor
 
     private var order = "popular"
@@ -102,8 +116,9 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
 
         checkPermission()
         loadData(query, order, page)
-        initGoogleAdsInterstitial()
+        //initGoogleAdsInterstitial()
         initYandexAdsInterstitial()
+        loadingYandexAdsBanner()
         checkUpdateAvailability()
 
         adapter.setReachEndListener(object : ImageAdapter.OnReachEndListener {
@@ -115,7 +130,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
 
         adapter.setSaveButtonListener(object : ImageAdapter.OnSaveButtonListener {
             override fun onSave(image: Image, position: Int) {
-                showAdsInterstitial()
+                showYandexAdsInterstitial()
                 downloadFile(image.imageURL.replace("https://pixabay.com/get/", ""))
             }
         })
@@ -254,6 +269,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
                     item.setIcon(R.drawable.ic_popular)
                     showMessage(getString(R.string.sort_by_latest))
                 }
+
                 "latest" -> {
                     order = "popular"
                     page = 1
@@ -404,8 +420,9 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
         return false
     }
 
+    /*
     // показ межстраничной Google рекламы в приложении
-    private fun showAdsInterstitial() {
+    private fun showGoogleAdsInterstitial() {
         if (googleInterstitialAd != null && !SharedPreferencesManager.isFullVersion)
             googleInterstitialAd?.show(this)
         else if (googleInterstitialAd == null && yandexInterstitialAd?.isLoaded == true && !SharedPreferencesManager.isFullVersion)
@@ -413,45 +430,60 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
         else
             Log.d(TAG, "Google & Yandex: the interstitial ad wasn't ready yet")
     }
+    */
 
+    // показ межстраничной Yandex рекламы в приложении
+    private fun showYandexAdsInterstitial() {
+        if (yandexInterstitialAd?.isLoaded == true && !SharedPreferencesManager.isFullVersion)
+            yandexInterstitialAd?.show()
+        else
+            Log.d(TAG, "Yandex: the interstitial ad wasn't ready yet")
+    }
+
+    /*
     // инициализация межстраничной Google рекламы в приложении
     private fun initGoogleAdsInterstitial() {
         val adRequest = AdRequest.Builder().build()
 
-        InterstitialAd.load(this, getString(R.string.ads_google_interstitialAd_id), adRequest, object : InterstitialAdLoadCallback() {
-            override fun onAdFailedToLoad(adError: LoadAdError) {
-                Log.d(TAG, "Google (onAdFailedToLoad): " + adError.message)
-                googleInterstitialAd = null
-            }
-
-            override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                Log.d(TAG, "Google: onAdLoaded")
-                googleInterstitialAd = interstitialAd
-                googleInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
-                    override fun onAdDismissedFullScreenContent() {
-                        Log.d(TAG, "Google: onAdDismissedFullScreenContent")
-                        showMessage(getString(R.string.download_started))
-                        googleInterstitialAd = null
-                        initGoogleAdsInterstitial()
-                    }
-
-                    override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                        Log.d(TAG, "Google: onAdFailedToShowFullScreenContent")
-                        googleInterstitialAd = null
-                        initGoogleAdsInterstitial()
-                        // если с google ошибка, то тогда показываем рекламу Яндекс
-                        if (yandexInterstitialAd?.isLoaded == true)
-                            yandexInterstitialAd?.show()
-                    }
-
-                    override fun onAdShowedFullScreenContent() {
-                        Log.d(TAG, "Google: onAdShowedFullScreenContent")
-                    }
+        InterstitialAd.load(
+            this,
+            getString(R.string.ads_google_interstitialAd_id),
+            adRequest,
+            object : InterstitialAdLoadCallback() {
+                override fun onAdFailedToLoad(adError: LoadAdError) {
+                    Log.d(TAG, "Google (onAdFailedToLoad): " + adError.message)
+                    googleInterstitialAd = null
                 }
 
-            }
-        })
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    Log.d(TAG, "Google: onAdLoaded")
+                    googleInterstitialAd = interstitialAd
+                    googleInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+                        override fun onAdDismissedFullScreenContent() {
+                            Log.d(TAG, "Google: onAdDismissedFullScreenContent")
+                            showMessage(getString(R.string.download_started))
+                            googleInterstitialAd = null
+                            initGoogleAdsInterstitial()
+                        }
+
+                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                            Log.d(TAG, "Google: onAdFailedToShowFullScreenContent")
+                            googleInterstitialAd = null
+                            initGoogleAdsInterstitial()
+                            // если с google ошибка, то тогда показываем рекламу Яндекс
+                            if (yandexInterstitialAd?.isLoaded == true)
+                                yandexInterstitialAd?.show()
+                        }
+
+                        override fun onAdShowedFullScreenContent() {
+                            Log.d(TAG, "Google: onAdShowedFullScreenContent")
+                        }
+                    }
+
+                }
+            })
     }
+    */
 
     // инициализация межстраничной Яндекс рекламы в приложении
     private fun initYandexAdsInterstitial() {
@@ -463,13 +495,13 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
                 Log.d(TAG, "Yandex: onAdLoaded")
             }
 
-            override fun onAdFailedToLoad(adRequestError: AdRequestError) {
+            override fun onAdFailedToLoad(adRequestError: YandexAdRequestError) {
                 Log.d(TAG, "Yandex (onAdFailedToLoad): " + adRequestError.description)
                 yandexInterstitialAd = null
                 initYandexAdsInterstitial()
             }
 
-            override fun onImpression(impressionData: ImpressionData?) {
+            override fun onImpression(impressionData: YandexImpressionData?) {
                 Log.d(TAG, "Yandex: onImpression")
             }
 
@@ -481,6 +513,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
                 Log.d(TAG, "Yandex: onAdDismissed")
                 yandexInterstitialAd = null
                 initYandexAdsInterstitial()
+                showMessage(getString(R.string.download_started))
             }
 
             override fun onAdClicked() {
@@ -496,6 +529,44 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             }
 
         })
+    }
+
+    // инициализация и отображение баннера Яндекс рекламы в приложении
+    private fun loadingYandexAdsBanner() {
+        bannerAd = bind.bannerAdView
+        bannerAd!!.setAdUnitId(getString(R.string.ads_yandex_banner_id))
+        bannerAd!!.setAdSize(AdSize.stickySize(this, Resources.getSystem().displayMetrics.widthPixels))
+
+        val adRequest = YandexAdRequest.Builder().build()
+
+        bannerAd!!.setBannerAdEventListener(object : YandexBannerAdEventListener {
+            override fun onAdLoaded() {
+                Log.d(TAG, "Yandex Banner: ")
+            }
+
+            override fun onAdFailedToLoad(error: YandexAdRequestError) {
+                Log.d(TAG, "Yandex Banner: Banner ad failed to load with code ${error.code}: ${error.description}")
+            }
+
+            override fun onAdClicked() {
+                Log.d(TAG, "Yandex Banner: Banner ad clicked")
+            }
+
+            override fun onLeftApplication() {
+                Log.d(TAG, "Yandex Banner: Left application")
+            }
+
+            override fun onReturnedToApplication() {
+                Log.d(TAG, "Yandex Banner: Returned to application")
+            }
+
+            override fun onImpression(data: YandexImpressionData?) {
+                Log.d(TAG, "Yandex Banner: Impression: ${data?.rawData}")
+            }
+        })
+
+        if (!SharedPreferencesManager.isFullVersion)
+            bannerAd?.loadAd(adRequest)
     }
 
     override fun onResume() {
@@ -521,6 +592,8 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             disposable.dispose()
         yandexInterstitialAd?.destroy()
         yandexInterstitialAd = null
+        bannerAd?.destroy()
+        bannerAd = null
         super.onDestroy()
     }
 
@@ -547,7 +620,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
 
         NotificationManagerCompat.from(this).apply {
             notificationBuilder.setProgress(0, 0, true)
-            notify(1, notificationBuilder.build())
+            //notify(1, notificationBuilder.build())
         }
     }
 
@@ -556,7 +629,7 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
         NotificationManagerCompat.from(this).apply {
             notificationBuilder.setContentText(getString(R.string.download_complete))
                 .setProgress(0, 0, false)
-            notify(1, notificationBuilder.build())
+            //notify(1, notificationBuilder.build())
             cancel(1)
         }
     }
