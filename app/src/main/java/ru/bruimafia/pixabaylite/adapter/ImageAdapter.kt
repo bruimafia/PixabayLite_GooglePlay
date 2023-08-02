@@ -7,15 +7,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.squareup.picasso.Picasso
 import com.stfalcon.imageviewer.StfalconImageViewer
 import ru.bruimafia.pixabaylite.R
-import ru.bruimafia.pixabaylite.databinding.ItemPostBinding
+import ru.bruimafia.pixabaylite.databinding.ItemPostImageBinding
 import ru.bruimafia.pixabaylite.databinding.LayoutAdBinding
-import ru.bruimafia.pixabaylite.model.Image
+import ru.bruimafia.pixabaylite.model.image.Image
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import kotlin.math.pow
 import kotlin.math.roundToInt
-
 import com.yandex.mobile.ads.common.AdRequestError as YandexAdRequestError
 import com.yandex.mobile.ads.nativeads.template.NativeBannerView
+import ru.bruimafia.pixabaylite.util.Constants
 import com.yandex.mobile.ads.nativeads.NativeAd as YandexNativeAd
 import com.yandex.mobile.ads.nativeads.NativeAdLoadListener as YandexNativeAdLoadListener
 import com.yandex.mobile.ads.nativeads.NativeAdLoader as YandexNativeAdLoader
@@ -69,7 +69,7 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return if (viewType == ITEM_VIEW) {
-            val view = ItemPostBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+            val view = ItemPostImageBinding.inflate(LayoutInflater.from(parent.context), parent, false)
             ImageViewHolder(view)
         } else {
             val view = LayoutAdBinding.inflate(LayoutInflater.from(parent.context), parent, false)
@@ -119,7 +119,7 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
     override fun getItemCount() = list.size
      */
 
-    inner class ImageViewHolder(private val binding: ItemPostBinding) : RecyclerView.ViewHolder(binding.root) {
+    inner class ImageViewHolder(private val binding: ItemPostImageBinding) : RecyclerView.ViewHolder(binding.root) {
 
         fun bind(image: Image) {
             binding.apply {
@@ -190,7 +190,7 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
             nativeAdLoader?.setNativeAdLoadListener(eventLogger)
             nativeAdLoader?.loadAd(
                 YandexNativeAdRequestConfiguration
-                    .Builder(binding.root.resources.getString(R.string.ads_yandex_nativeAd_id))
+                    .Builder(binding.root.resources.getString(R.string.ads_yandex_nativeAd_image_id))
                     .setShouldLoadImagesAutomatically(true)
                     .build()
             )
@@ -210,23 +210,23 @@ class ImageAdapter(private var list: MutableList<Image> = mutableListOf()) : Rec
             }
 
             override fun onAdFailedToLoad(error: YandexAdRequestError) {
-                Log.d("ADS", "Native ad failed to load with code ${error.code}: ${error.description}")
+                Log.d(Constants.TAG, "Native ad failed to load with code ${error.code}: ${error.description}")
             }
 
             override fun onAdClicked() {
-                Log.d("ADS", "Native ad clicked")
+                Log.d(Constants.TAG, "Native ad clicked")
             }
 
             override fun onLeftApplication() {
-                Log.d("ADS", "Left application")
+                Log.d(Constants.TAG, "Left application")
             }
 
             override fun onReturnedToApplication() {
-                Log.d("ADS", "Returned to application")
+                Log.d(Constants.TAG, "Returned to application")
             }
 
             override fun onImpression(data: YandexImpressionData?) {
-                Log.d("ADS", "Impression: ${data?.rawData}")
+                Log.d(Constants.TAG, "Impression: ${data?.rawData}")
             }
         }
 

@@ -6,13 +6,11 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.util.Log
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.RequestConfiguration
 import com.onesignal.OneSignal
 import com.yandex.metrica.YandexMetrica
 import com.yandex.metrica.YandexMetricaConfig
+import ru.bruimafia.pixabaylite.util.Constants
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
-import java.util.Arrays
 import com.yandex.mobile.ads.common.MobileAds as YandexMobileAds
 
 class App : Application() {
@@ -31,7 +29,10 @@ class App : Application() {
         //MobileAds.initialize(this)
 
         // Yandex Mobile Ads
-        YandexMobileAds.initialize(this) { Log.d("ADS", "YandexMobileAds: SDK initialized") }
+        YandexMobileAds.initialize(this) { Log.d(Constants.TAG, "YandexMobileAds: SDK initialized") }
+
+        // Yandex AppMetrica Push
+        //YandexMetricaPush.init(applicationContext)
 
         // Yandex AppMetrica
         val config: YandexMetricaConfig = YandexMetricaConfig.newConfigBuilder(getString(R.string.appMetrica_api_key)).build()

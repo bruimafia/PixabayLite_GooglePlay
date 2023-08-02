@@ -14,7 +14,6 @@ import ru.bruimafia.pixabaylite.BuildConfig
 import ru.bruimafia.pixabaylite.databinding.DialogAboutBinding
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 
-
 class AboutDialog : DialogFragment() {
 
     private val VK_ID = "31223368"

@@ -1,168 +1,69 @@
 package ru.bruimafia.pixabaylite.main
 
 import android.Manifest
-import android.app.DownloadManager
-import android.app.SearchManager
-import android.content.ContentValues
-import android.content.Context
 import android.content.pm.PackageManager
-import android.content.res.Resources
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.media.MediaScannerConnection
-import android.net.Uri
-import android.os.Build
 import android.os.Bundle
-import android.os.Environment
-import android.provider.MediaStore
-import android.provider.Settings
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.SearchView
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.databinding.DataBindingUtil
-import androidx.recyclerview.widget.RecyclerView
-import com.anjlab.android.iab.v3.BillingProcessor
-import com.anjlab.android.iab.v3.PurchaseInfo
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.MobileAds
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.android.billingclient.api.AcknowledgePurchaseParams
+import com.android.billingclient.api.BillingClient
+import com.android.billingclient.api.BillingClientStateListener
+import com.android.billingclient.api.BillingFlowParams
+import com.android.billingclient.api.BillingFlowParams.ProductDetailsParams
+import com.android.billingclient.api.BillingResult
+import com.android.billingclient.api.ConsumeParams
+import com.android.billingclient.api.ProductDetails
+import com.android.billingclient.api.Purchase
+import com.android.billingclient.api.PurchasesUpdatedListener
+import com.android.billingclient.api.QueryProductDetailsParams
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
+import com.google.android.material.tabs.TabLayoutMediator
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
-import com.google.android.play.core.review.ReviewManagerFactory
-import com.google.android.ump.ConsentDebugSettings
-import com.google.android.ump.ConsentInformation
-import com.google.android.ump.ConsentRequestParameters
-import com.google.android.ump.UserMessagingPlatform
-import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
-import com.yandex.mobile.ads.banner.AdSize
-import com.yandex.mobile.ads.interstitial.InterstitialAdEventListener
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.disposables.Disposable
-import io.reactivex.schedulers.Schedulers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import okhttp3.OkHttpClient
-import okhttp3.ResponseBody
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import ru.bruimafia.pixabaylite.BuildConfig
 import ru.bruimafia.pixabaylite.R
-import ru.bruimafia.pixabaylite.adapter.ImageAdapter
-import ru.bruimafia.pixabaylite.api.ApiClient
-import ru.bruimafia.pixabaylite.api.ApiService
+import ru.bruimafia.pixabaylite.adapter.TabAdapter
 import ru.bruimafia.pixabaylite.databinding.ActivityMainBinding
-import ru.bruimafia.pixabaylite.model.Image
+import ru.bruimafia.pixabaylite.util.Constants
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
-import java.io.File
-import java.io.OutputStream
-import java.util.Objects
-import java.util.concurrent.atomic.AtomicBoolean
-import com.yandex.mobile.ads.banner.BannerAdEventListener as YandexBannerAdEventListener
-import com.yandex.mobile.ads.banner.BannerAdView as YandexBannerAdView
-import com.yandex.mobile.ads.common.AdRequest as YandexAdRequest
-import com.yandex.mobile.ads.common.AdRequestError as YandexAdRequestError
-import com.yandex.mobile.ads.common.ImpressionData as YandexImpressionData
-import com.yandex.mobile.ads.interstitial.InterstitialAd as YandexInterstitialAd
 
+class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
 
-class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
-
-    private var TAG = "ADS"
-
-    //private lateinit var consentInformation: ConsentInformation
-    private var isMobileAdsInitializeCalled = AtomicBoolean(false)
-    private lateinit var notificationBuilder: NotificationCompat.Builder
     private lateinit var bind: ActivityMainBinding
     private lateinit var appUpdateManager: AppUpdateManager
-    private var adapter: ImageAdapter = ImageAdapter()
-    private lateinit var disposable: Disposable
-    private lateinit var searchView: SearchView
     private lateinit var bottomSheetDialog: BottomSheetDialog
-    //private var googleInterstitialAd: InterstitialAd? = null
-    private var yandexInterstitialAd: YandexInterstitialAd? = null
-    private var bannerAd: YandexBannerAdView? = null
-    private lateinit var bp: BillingProcessor
-
-    private var order = "popular"
-    private var query = ""
-    private var page = 1
+    private lateinit var billingClient: BillingClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         bind = DataBindingUtil.setContentView(this, R.layout.activity_main)
         setSupportActionBar(bind.toolbar)
 
-        bp = BillingProcessor.newBillingProcessor(bind.root.context, getString(R.string.billing_license_key), this)
-        bp.initialize()
+        bind.viewPager.adapter = TabAdapter(this)
+        TabLayoutMediator(bind.tabLayout, bind.viewPager) { t, position ->
+            when (position) {
+                0 -> t.text = bind.root.context.getString(R.string.tab_images)
+                1 -> t.text = bind.root.context.getString(R.string.tab_videos)
+            }
+        }.attach()
 
-        if (bp.isPurchased(getString(R.string.billing_product_id)))
-            SharedPreferencesManager.isFullVersion = true
+        billingClient = BillingClient.newBuilder(bind.root.context)
+            .setListener(this)
+            .enablePendingPurchases()
+            .build()
 
         checkPermission()
-        loadData(query, order, page)
-        //initGoogleAdsInterstitial()
-        initYandexAdsInterstitial()
-        loadingYandexAdsBanner()
         checkUpdateAvailability()
-
-        adapter.setReachEndListener(object : ImageAdapter.OnReachEndListener {
-            override fun onLoad() {
-                bind.progressBarHor.visibility = View.VISIBLE
-                loadData(query, order, page)
-            }
-        })
-
-        adapter.setSaveButtonListener(object : ImageAdapter.OnSaveButtonListener {
-            override fun onSave(image: Image, position: Int) {
-                showYandexAdsInterstitial()
-                downloadFile(image.imageURL.replace("https://pixabay.com/get/", ""))
-            }
-        })
-
-        adapter.setSearchTagListener(object : ImageAdapter.OnSearchTagListener {
-            override fun onSearch(title: String) {
-                searchView.setQuery(title, true)
-                searchView.isIconified = false
-                searchView.clearFocus()
-                loadData(title, order, page)
-            }
-        })
-
-        bind.swipeRefreshLayout.setOnRefreshListener {
-            page = 1
-            loadData(query, order, page)
-        }
-
-        bind.fab.setOnClickListener { bind.recycler.smoothScrollToPosition(0) }
-
-        bind.recycler.addOnScrollListener(object : RecyclerView.OnScrollListener() {
-            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                if (dy > 0)
-                    bind.fab.visibility = View.VISIBLE
-                else
-                    bind.fab.visibility = View.GONE
-            }
-        })
 
         if (SharedPreferencesManager.isFirstLaunch)
             showAlertDialog()
-
     }
 
     // сервис в РФ заблокирован
@@ -210,363 +111,25 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
         }
     }
 
-    // окно выставления оценки и отзыва
-    private fun requestReview() {
-        val reviewManager = ReviewManagerFactory.create(this)
-        val requestReviewFlow = reviewManager.requestReviewFlow()
-
-        requestReviewFlow.addOnCompleteListener { request ->
-            if (request.isSuccessful) {
-                val reviewInfo = request.result
-                val flow = reviewManager.launchReviewFlow(this, reviewInfo)
-                flow.addOnCompleteListener {
-//                    SharedPreferencesManager.isPlayRating = true
-                }
-            }
-        }
-    }
-
     // меню и строка поиска
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
         menuInflater.inflate(R.menu.main, menu)
-
-        menu?.findItem(R.id.action_buy)?.isVisible = !bp.isPurchased(getString(R.string.billing_product_id))
-
-        val searchManager = getSystemService(SEARCH_SERVICE) as SearchManager
-        searchView = menu!!.findItem(R.id.action_search).actionView as SearchView
-        searchView.maxWidth = Int.MAX_VALUE
-        searchView.queryHint = getString(R.string.menu_search)
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
-
-        searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(newText: String?): Boolean {
-                query = newText ?: ""
-                page = 1
-                bind.progressBar.visibility = View.VISIBLE
-                loadData(query, order, page)
-                return false
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                query = newText ?: ""
-                page = 1
-                bind.progressBar.visibility = View.VISIBLE
-                loadData(query, order, page)
-                return false
-            }
-        })
-
+        menu?.findItem(R.id.action_buy)?.isVisible = !SharedPreferencesManager.isFullVersion
         return super.onCreateOptionsMenu(menu)
     }
 
     // выбор пунктов меню
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == R.id.action_sort) {
-            when (order) {
-                "popular" -> {
-                    order = "latest"
-                    page = 1
-                    item.setIcon(R.drawable.ic_popular)
-                    showMessage(getString(R.string.sort_by_latest))
-                }
-
-                "latest" -> {
-                    order = "popular"
-                    page = 1
-                    item.setIcon(R.drawable.ic_latest)
-                    showMessage(getString(R.string.sort_by_popular))
-                }
-            }
-            loadData(query, order, page)
+        when (item.itemId) {
+            R.id.action_buy -> establishConnection()
+            R.id.action_about -> AboutDialog().show(supportFragmentManager, "AboutDialog")
         }
-
-        if (item.itemId == R.id.action_buy) {
-            bp.purchase(this, getString(R.string.billing_product_id))
-        }
-
-        if (item.itemId == R.id.action_about) {
-            AboutDialog().show(supportFragmentManager, "AboutDialog")
-        }
-
-        return true
-    }
-
-    // загрузка данных
-    private fun loadData(q: String, order: String, page: Int) {
-        disposable = ApiClient.getClient("https://pixabay.com/api/")
-            .create(ApiService::class.java)
-            .getImages(q, order, page)
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(
-                { imagesResponse ->
-                    if (page <= 1)
-                        showData(imagesResponse.images as MutableList<Image>)
-                    else
-                        showLoadedData(imagesResponse.images as MutableList<Image>)
-                },
-                { throwable -> showMessage(throwable.message) }
-            )
-    }
-
-    // показ данных
-    private fun showData(list: MutableList<Image>) {
-        adapter.setList(list)
-        bind.recycler.adapter = adapter
-        page++
-        bind.progressBar.visibility = View.GONE
-        bind.swipeRefreshLayout.isRefreshing = false
-    }
-
-    // показ подгруженных данных
-    private fun showLoadedData(list: MutableList<Image>) {
-        adapter.updateList(list)
-        page++
-        bind.progressBarHor.visibility = View.GONE
-        requestReview()
+        return false
     }
 
     // показ сообщения
     private fun showMessage(msg: String?) {
-        Snackbar.make(bind.root, msg + "", Snackbar.LENGTH_LONG).show()
-    }
-
-    // скачивание файла
-    private fun downloadFile(url: String) {
-        showMessage(getString(R.string.download_started))
-        startNotificationDownload()
-        disposable = Retrofit.Builder()
-            .client(OkHttpClient.Builder().build())
-            .addConverterFactory(GsonConverterFactory.create())
-            .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-            .baseUrl("https://pixabay.com/get/")
-            .build()
-            .create(ApiService::class.java)
-            .downloadImage(url)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribeOn(Schedulers.io())
-            .subscribe(
-                {
-                    GlobalScope.launch {
-                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-                            saveFileWithAPI29(it.body()!!, url)
-                        else
-                            saveFileBeforeAPI29(it.body()!!, url)
-                        stopNotificationDownload()
-                    }
-                },
-                { throwable -> showMessage(throwable.message) }
-            )
-    }
-
-    // сохранение файла API>=29
-    @RequiresApi(Build.VERSION_CODES.Q)
-    private fun saveFileWithAPI29(body: ResponseBody, name: String): Boolean {
-
-        val fos: OutputStream
-        val bmp = BitmapFactory.decodeStream(body.byteStream())
-
-        try {
-            val contentValues = ContentValues().apply {
-                put(MediaStore.Images.Media.DISPLAY_NAME, "pixabaylite_" + System.currentTimeMillis() + ".jpg")
-                put(MediaStore.Images.Media.MIME_TYPE, "image/jpg")
-                put(
-                    MediaStore.Images.Media.RELATIVE_PATH,
-                    Environment.DIRECTORY_PICTURES + File.separator + "PixabayLite"
-                )
-            }
-
-            val imageUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-            fos = contentResolver.openOutputStream(Objects.requireNonNull(imageUri)!!)!!
-
-            try {
-                bmp.compress(Bitmap.CompressFormat.JPEG, 100, fos)
-                Objects.requireNonNull(fos)
-            } catch (e: Exception) {
-                println(e.toString())
-            } finally {
-                fos.close()
-            }
-
-            return true
-        } catch (e: Exception) {
-            println(e.toString())
-        }
-
-        return false
-    }
-
-    // сохранение файла API<29
-    private fun saveFileBeforeAPI29(body: ResponseBody, name: String): Boolean {
-        try {
-            val mediaStorageDir = File(Environment.getExternalStorageDirectory(), "PixabayLite")
-            if (!mediaStorageDir.exists()) {
-                if (!mediaStorageDir.mkdirs())
-                    showMessage(getString(R.string.error_create_folder))
-            }
-
-            val file = File(mediaStorageDir, "pixabaylite_" + System.currentTimeMillis() + ".jpg")
-            body.byteStream().use { input ->
-                file.outputStream().use { output -> input.copyTo(output) }
-            }
-
-            MediaScannerConnection.scanFile(this@MainActivity, arrayOf(file.absolutePath), null, null)
-
-            return true
-        } catch (e: Exception) {
-            println(e.toString())
-        }
-
-        return false
-    }
-
-    /*
-    // показ межстраничной Google рекламы в приложении
-    private fun showGoogleAdsInterstitial() {
-        if (googleInterstitialAd != null && !SharedPreferencesManager.isFullVersion)
-            googleInterstitialAd?.show(this)
-        else if (googleInterstitialAd == null && yandexInterstitialAd?.isLoaded == true && !SharedPreferencesManager.isFullVersion)
-            yandexInterstitialAd?.show()
-        else
-            Log.d(TAG, "Google & Yandex: the interstitial ad wasn't ready yet")
-    }
-    */
-
-    // показ межстраничной Yandex рекламы в приложении
-    private fun showYandexAdsInterstitial() {
-        if (yandexInterstitialAd?.isLoaded == true && !SharedPreferencesManager.isFullVersion)
-            yandexInterstitialAd?.show()
-        else
-            Log.d(TAG, "Yandex: the interstitial ad wasn't ready yet")
-    }
-
-    /*
-    // инициализация межстраничной Google рекламы в приложении
-    private fun initGoogleAdsInterstitial() {
-        val adRequest = AdRequest.Builder().build()
-
-        InterstitialAd.load(
-            this,
-            getString(R.string.ads_google_interstitialAd_id),
-            adRequest,
-            object : InterstitialAdLoadCallback() {
-                override fun onAdFailedToLoad(adError: LoadAdError) {
-                    Log.d(TAG, "Google (onAdFailedToLoad): " + adError.message)
-                    googleInterstitialAd = null
-                }
-
-                override fun onAdLoaded(interstitialAd: InterstitialAd) {
-                    Log.d(TAG, "Google: onAdLoaded")
-                    googleInterstitialAd = interstitialAd
-                    googleInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
-                        override fun onAdDismissedFullScreenContent() {
-                            Log.d(TAG, "Google: onAdDismissedFullScreenContent")
-                            showMessage(getString(R.string.download_started))
-                            googleInterstitialAd = null
-                            initGoogleAdsInterstitial()
-                        }
-
-                        override fun onAdFailedToShowFullScreenContent(adError: AdError) {
-                            Log.d(TAG, "Google: onAdFailedToShowFullScreenContent")
-                            googleInterstitialAd = null
-                            initGoogleAdsInterstitial()
-                            // если с google ошибка, то тогда показываем рекламу Яндекс
-                            if (yandexInterstitialAd?.isLoaded == true)
-                                yandexInterstitialAd?.show()
-                        }
-
-                        override fun onAdShowedFullScreenContent() {
-                            Log.d(TAG, "Google: onAdShowedFullScreenContent")
-                        }
-                    }
-
-                }
-            })
-    }
-    */
-
-    // инициализация межстраничной Яндекс рекламы в приложении
-    private fun initYandexAdsInterstitial() {
-        yandexInterstitialAd = YandexInterstitialAd(this)
-        yandexInterstitialAd?.setAdUnitId(getString(R.string.ads_yandex_interstitialAd_unitId))
-        yandexInterstitialAd?.loadAd(YandexAdRequest.Builder().build())
-        yandexInterstitialAd?.setInterstitialAdEventListener(object : InterstitialAdEventListener {
-            override fun onAdLoaded() {
-                Log.d(TAG, "Yandex: onAdLoaded")
-            }
-
-            override fun onAdFailedToLoad(adRequestError: YandexAdRequestError) {
-                Log.d(TAG, "Yandex (onAdFailedToLoad): " + adRequestError.description)
-                yandexInterstitialAd = null
-                initYandexAdsInterstitial()
-            }
-
-            override fun onImpression(impressionData: YandexImpressionData?) {
-                Log.d(TAG, "Yandex: onImpression")
-            }
-
-            override fun onAdShown() {
-                Log.d(TAG, "Yandex: onAdShown")
-            }
-
-            override fun onAdDismissed() {
-                Log.d(TAG, "Yandex: onAdDismissed")
-                yandexInterstitialAd = null
-                initYandexAdsInterstitial()
-                showMessage(getString(R.string.download_started))
-            }
-
-            override fun onAdClicked() {
-                Log.d(TAG, "Yandex: onAdClicked")
-            }
-
-            override fun onLeftApplication() {
-                Log.d(TAG, "Yandex: onLeftApplication")
-            }
-
-            override fun onReturnedToApplication() {
-                Log.d(TAG, "Yandex: onReturnedToApplication")
-            }
-
-        })
-    }
-
-    // инициализация и отображение баннера Яндекс рекламы в приложении
-    private fun loadingYandexAdsBanner() {
-        bannerAd = bind.bannerAdView
-        bannerAd!!.setAdUnitId(getString(R.string.ads_yandex_banner_id))
-        bannerAd!!.setAdSize(AdSize.stickySize(this, Resources.getSystem().displayMetrics.widthPixels))
-
-        val adRequest = YandexAdRequest.Builder().build()
-
-        bannerAd!!.setBannerAdEventListener(object : YandexBannerAdEventListener {
-            override fun onAdLoaded() {
-                Log.d(TAG, "Yandex Banner: ")
-            }
-
-            override fun onAdFailedToLoad(error: YandexAdRequestError) {
-                Log.d(TAG, "Yandex Banner: Banner ad failed to load with code ${error.code}: ${error.description}")
-            }
-
-            override fun onAdClicked() {
-                Log.d(TAG, "Yandex Banner: Banner ad clicked")
-            }
-
-            override fun onLeftApplication() {
-                Log.d(TAG, "Yandex Banner: Left application")
-            }
-
-            override fun onReturnedToApplication() {
-                Log.d(TAG, "Yandex Banner: Returned to application")
-            }
-
-            override fun onImpression(data: YandexImpressionData?) {
-                Log.d(TAG, "Yandex Banner: Impression: ${data?.rawData}")
-            }
-        })
-
-        if (!SharedPreferencesManager.isFullVersion)
-            bannerAd?.loadAd(adRequest)
+        Snackbar.make(bind.root, msg.toString(), Snackbar.LENGTH_LONG).show()
     }
 
     override fun onResume() {
@@ -586,70 +149,154 @@ class MainActivity : AppCompatActivity(), BillingProcessor.IBillingHandler {
             }
     }
 
-    override fun onDestroy() {
-        bp.release()
-        if (!disposable.isDisposed)
-            disposable.dispose()
-        yandexInterstitialAd?.destroy()
-        yandexInterstitialAd = null
-        bannerAd?.destroy()
-        bannerAd = null
-        super.onDestroy()
+    // обноаление информации о покупках
+    override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
+        billingClient = BillingClient.newBuilder(bind.root.context)
+            .setListener(this)
+            .enablePendingPurchases()
+            .build()
+
+        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
+            for (purchase in purchases)
+                handlePurchase(purchase)
+        } else if (billingResult.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
+            showMessage(getString(R.string.snackbar_reset_app))
+            SharedPreferencesManager.isFullVersion = true
+        } else handleBillingError(billingResult.responseCode)
     }
 
-    override fun onProductPurchased(productId: String, details: PurchaseInfo?) {
-        showMessage(getString(R.string.snackbar_reset_app))
-        SharedPreferencesManager.isFullVersion = true
+    // установка соединения с google play для покупок
+    private fun establishConnection() {
+        billingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    getSingleInAppDetail()
+                } else retryBillingServiceConnection()
+            }
+
+            override fun onBillingServiceDisconnected() {
+                retryBillingServiceConnection()
+            }
+        })
     }
 
-    override fun onPurchaseHistoryRestored() {}
+    // повторное соединение с google play для покупок
+    private fun retryBillingServiceConnection() {
+        var tries = 1
+        val maxTries = 3
+        var isConnectionEstablished = false
 
-    override fun onBillingError(errorCode: Int, error: Throwable?) {
-        showMessage(error?.message)
+        do {
+            try {
+                billingClient.startConnection(object : BillingClientStateListener {
+                    override fun onBillingServiceDisconnected() {
+                        retryBillingServiceConnection()
+                    }
+
+                    override fun onBillingSetupFinished(billingResult: BillingResult) {
+                        tries++
+                        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK)
+                            isConnectionEstablished = true
+                        else if (tries == maxTries)
+                            handleBillingError(billingResult.responseCode)
+                    }
+                })
+            } catch (e: Exception) {
+                tries++
+            }
+        } while (tries <= maxTries && !isConnectionEstablished)
+
+        if (!isConnectionEstablished)
+            handleBillingError(-1)
     }
 
-    override fun onBillingInitialized() {}
+    // список доступных покупок
+    private fun getSingleInAppDetail() {
+        val queryProductDetailsParams =
+            QueryProductDetailsParams.newBuilder()
+                .setProductList(
+                    listOf(
+                        QueryProductDetailsParams.Product.newBuilder()
+                            .setProductId(getString(R.string.billing_product_id))
+                            .setProductType(BillingClient.ProductType.INAPP)
+                            .build()
+                    )
+                )
+                .build()
 
-    // запуск уведомления о скачивании файла
-    private fun startNotificationDownload() {
-        notificationBuilder = NotificationCompat.Builder(this, BuildConfig.APPLICATION_ID).apply {
-            setContentTitle(getString(R.string.download_process))
-            setSmallIcon(R.drawable.ic_download)
-            priority = NotificationCompat.PRIORITY_LOW
-        }
-
-        NotificationManagerCompat.from(this).apply {
-            notificationBuilder.setProgress(0, 0, true)
-            //notify(1, notificationBuilder.build())
-        }
-    }
-
-    // остановка уведомления о скачивании файла
-    private fun stopNotificationDownload() {
-        NotificationManagerCompat.from(this).apply {
-            notificationBuilder.setContentText(getString(R.string.download_complete))
-                .setProgress(0, 0, false)
-            //notify(1, notificationBuilder.build())
-            cancel(1)
-        }
-    }
-
-    // не работает с включенным VPN
-    private fun downloadFileWithDM(url: String) {
-        val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        val request = DownloadManager.Request(Uri.parse(url))
-        request.setAllowedNetworkTypes(DownloadManager.Request.NETWORK_MOBILE or DownloadManager.Request.NETWORK_WIFI)
-            .setTitle("Загрузка изображения")
-            .setMimeType("image/jpg")
-            .setAllowedOverRoaming(true)
-            .setAllowedOverMetered(true)
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(
-                Environment.DIRECTORY_PICTURES,
-                File.separator + "PixabayLite" + File.separator + "pixabaylite_" + System.currentTimeMillis() + ".jpg"
+        billingClient.queryProductDetailsAsync(queryProductDetailsParams) { _, productDetailsList ->
+            launchPurchaseFlow(
+                productDetailsList[0]
             )
-        downloadManager.enqueue(request)
-        showMessage("Изображение будет сохранено в папку PixabayLite")
+        }
+    }
+
+    // запуск покупки
+    private fun launchPurchaseFlow(productDetails: ProductDetails?) {
+        val productList = ArrayList<ProductDetailsParams>()
+        productList.add(
+            ProductDetailsParams.newBuilder()
+                .setProductDetails(productDetails!!)
+                .build()
+        )
+
+        val billingFlowParams = BillingFlowParams.newBuilder()
+            .setProductDetailsParamsList(productList)
+            .build()
+
+        billingClient.launchBillingFlow(this, billingFlowParams)
+    }
+
+    // запуск покупки
+    private fun handlePurchase(purchase: Purchase) {
+        if (!purchase.isAcknowledged) {
+            billingClient.acknowledgePurchase(
+                AcknowledgePurchaseParams
+                    .newBuilder()
+                    .setPurchaseToken(purchase.purchaseToken)
+                    .build()
+            ) {
+                for (pur in purchase.products) {
+                    if (pur.equals(getString(R.string.billing_product_id), ignoreCase = true)) {
+                        Log.d(Constants.TAG, "Purchase is successful")
+                        Log.d(Constants.TAG, "Yay! Purchased")
+                        showMessage(getString(R.string.snackbar_reset_app))
+                        SharedPreferencesManager.isFullVersion = true
+
+                        consumePurchase(purchase)
+                    }
+                }
+            }
+        }
+    }
+
+    // запуск покупки
+    private fun consumePurchase(purchase: Purchase) {
+        val params = ConsumeParams.newBuilder()
+            .setPurchaseToken(purchase.purchaseToken)
+            .build()
+
+        billingClient.consumeAsync(params) { _, s ->
+            Log.d(Constants.TAG, "Consuming Successful: $s")
+            Log.d(Constants.TAG, "Product Consumed")
+        }
+    }
+
+    // обработка ошибок о покупках с google play
+    private fun handleBillingError(responseCode: Int) {
+        val errorMessage: String = when (responseCode) {
+            BillingClient.BillingResponseCode.BILLING_UNAVAILABLE -> "Billing service is currently unavailable. Please try again later."
+            BillingClient.BillingResponseCode.DEVELOPER_ERROR -> "An error occurred while processing the request. Please try again later."
+            BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED -> "This feature is not supported on your device."
+            BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> "You already own this item."
+            BillingClient.BillingResponseCode.ITEM_NOT_OWNED -> "You do not own this item."
+            BillingClient.BillingResponseCode.ITEM_UNAVAILABLE -> "This item is not available for purchase."
+            BillingClient.BillingResponseCode.SERVICE_DISCONNECTED -> "Billing service has been disconnected. Please try again later."
+            BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE -> "Billing service is currently unavailable. Please try again later."
+            BillingClient.BillingResponseCode.USER_CANCELED -> "The purchase has been canceled."
+            else -> "An unknown error occurred."
+        }
+        Log.d(Constants.TAG, errorMessage)
     }
 
 }
