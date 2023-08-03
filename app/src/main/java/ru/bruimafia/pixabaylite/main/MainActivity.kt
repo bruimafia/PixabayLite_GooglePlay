@@ -20,6 +20,7 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.google.android.gms.ads.MobileAds
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
@@ -28,11 +29,17 @@ import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
+import com.google.android.ump.ConsentDebugSettings
+import com.google.android.ump.ConsentForm
+import com.google.android.ump.ConsentInformation
+import com.google.android.ump.ConsentRequestParameters
+import com.google.android.ump.UserMessagingPlatform
 import ru.bruimafia.pixabaylite.R
 import ru.bruimafia.pixabaylite.adapter.TabAdapter
 import ru.bruimafia.pixabaylite.databinding.ActivityMainBinding
 import ru.bruimafia.pixabaylite.util.Constants
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
+import java.util.concurrent.atomic.AtomicBoolean
 
 class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
 
@@ -41,10 +48,56 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
     private lateinit var bottomSheetDialog: BottomSheetDialog
     private lateinit var billingClient: BillingClient
 
+    private lateinit var consentInformation: ConsentInformation
+    private var isMobileAdsInitializeCalled = AtomicBoolean(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         bind = DataBindingUtil.setContentView(this, R.layout.activity_main)
         setSupportActionBar(bind.toolbar)
+
+        val params = ConsentRequestParameters
+            .Builder()
+            .setTagForUnderAgeOfConsent(false)
+            .build()
+
+        consentInformation = UserMessagingPlatform.getConsentInformation(this)
+        consentInformation.requestConsentInfoUpdate(
+            this,
+            params,
+            {
+                UserMessagingPlatform.loadAndShowConsentFormIfRequired(
+                    this@MainActivity
+                ) { loadAndShowError ->
+                    // Consent gathering failed.
+                    if (loadAndShowError != null) {
+                        Log.w(
+                            Constants.TAG, String.format(
+                                "%s: %s",
+                                loadAndShowError.errorCode,
+                                loadAndShowError.message
+                            )
+                        )
+                    }
+
+                    // Consent has been gathered.
+                    if (consentInformation.canRequestAds()) {
+                        initializeMobileAdsSdk()
+                    }
+                }
+            },
+            { requestConsentError ->
+                // Consent gathering failed.
+                Log.w(
+                    Constants.TAG, String.format(
+                        "%s: %s",
+                        requestConsentError.errorCode,
+                        requestConsentError.message
+                    )
+                )
+            })
+        if (consentInformation.canRequestAds())
+            initializeMobileAdsSdk()
 
         bind.viewPager.adapter = TabAdapter(this)
         TabLayoutMediator(bind.tabLayout, bind.viewPager) { t, position ->
@@ -64,6 +117,12 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
 
         if (SharedPreferencesManager.isFirstLaunch)
             showAlertDialog()
+    }
+
+    private fun initializeMobileAdsSdk() {
+        if (isMobileAdsInitializeCalled.get()) return
+        isMobileAdsInitializeCalled.set(true)
+        // Initialize the Google Mobile Ads SDK.
     }
 
     // сервис в РФ заблокирован

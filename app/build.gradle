@@ -13,7 +13,7 @@ android {
         applicationId "ru.bruimafia.pixabaylite"
         minSdk 21
         targetSdk 33
-        versionCode 33
+        versionCode 34
         versionName "1.7.2"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
