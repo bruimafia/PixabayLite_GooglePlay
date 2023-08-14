@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 32,
-      "versionName": "1.7.1",
-      "outputFile": "pixabay_lite-1.7.1-code32-release.apk"
+      "versionCode": 34,
+      "versionName": "1.7.2",
+      "outputFile": "pixabay_lite-1.7.2-code34-release.apk"
     }
   ],
   "elementType": "File"

@@ -1,13 +1,18 @@
 package ru.bruimafia.pixabaylite.main
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.BillingClient
@@ -50,6 +55,23 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
 
     private lateinit var consentInformation: ConsentInformation
     private var isMobileAdsInitializeCalled = AtomicBoolean(false)
+
+    private val MY_PERMISSIONS_REQUEST = 777
+    private var PERMISSIONS = arrayOf(
+        Manifest.permission.INTERNET,
+        Manifest.permission.ACCESS_NETWORK_STATE,
+        Manifest.permission.ACCESS_WIFI_STATE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE
+    )
+
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    private var PERMISSIONS_API_33 = arrayOf(
+        Manifest.permission.INTERNET,
+        Manifest.permission.ACCESS_NETWORK_STATE,
+        Manifest.permission.ACCESS_WIFI_STATE,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.POST_NOTIFICATIONS
+    )
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -141,14 +163,22 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
 
     // проверка разрешений
     private fun checkPermission() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            ) != PackageManager.PERMISSION_GRANTED
-        ) {
-            val permissions = arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-            ActivityCompat.requestPermissions(this, permissions, 0)
+        if (Build.VERSION.SDK_INT >= 33) {
+            if (!hasPermissions(this, PERMISSIONS_API_33))
+                ActivityCompat.requestPermissions(this, PERMISSIONS_API_33, MY_PERMISSIONS_REQUEST)
+        } else {
+            if (!hasPermissions(this, PERMISSIONS))
+                ActivityCompat.requestPermissions(this, PERMISSIONS, MY_PERMISSIONS_REQUEST)
         }
+    }
+
+    // получение разрешений
+    private fun hasPermissions(context: Context, permissions: Array<String>): Boolean {
+        for (permission in permissions) {
+            if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED)
+                return false
+        }
+        return true
     }
 
     // проверка обновлений

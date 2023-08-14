@@ -172,7 +172,7 @@ class VideosFragment : Fragment() {
 
     // показ сообщения
     private fun showMessage(msg: String?) {
-        Snackbar.make(bind.root, msg + "", Snackbar.LENGTH_LONG).show()
+        Snackbar.make(bind.root.rootView, msg + "", Snackbar.LENGTH_LONG).show()
     }
 
     // загрузка данных

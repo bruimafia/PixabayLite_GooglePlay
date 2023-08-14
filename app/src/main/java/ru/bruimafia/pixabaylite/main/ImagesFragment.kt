@@ -1,14 +1,13 @@
 package ru.bruimafia.pixabaylite.main
 
-import android.app.DownloadManager
+import android.Manifest
 import android.app.SearchManager
 import android.content.ContentValues
-import android.content.Context
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaScannerConnection
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -23,8 +22,10 @@ import android.view.ViewGroup
 import android.widget.SearchView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
@@ -48,6 +49,7 @@ import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import ru.bruimafia.pixabaylite.App
 import ru.bruimafia.pixabaylite.BuildConfig
 import ru.bruimafia.pixabaylite.R
 import ru.bruimafia.pixabaylite.adapter.ImageAdapter
@@ -60,6 +62,7 @@ import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import java.io.File
 import java.io.OutputStream
 import java.util.Objects
+
 
 class ImagesFragment : Fragment() {
 
@@ -77,10 +80,12 @@ class ImagesFragment : Fragment() {
     private var query = ""
     private var page = 1
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
     }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         bind = DataBindingUtil.inflate(inflater, R.layout.fragment_images, container, false)
 
@@ -185,7 +190,7 @@ class ImagesFragment : Fragment() {
 
     // показ сообщения
     private fun showMessage(msg: String?) {
-        Snackbar.make(bind.root, msg + "", Snackbar.LENGTH_LONG).show()
+        Snackbar.make(bind.root.rootView, msg + "", Snackbar.LENGTH_LONG).show()
     }
 
     // загрузка данных
@@ -487,7 +492,13 @@ class ImagesFragment : Fragment() {
 
         NotificationManagerCompat.from(bind.root.context).apply {
             notificationBuilder.setProgress(0, 0, true)
-            notify(1, notificationBuilder.build())
+            if (ActivityCompat.checkSelfPermission(
+                    bind.root.context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                notify(1, notificationBuilder.build())
+            }
         }
     }
 
@@ -496,8 +507,14 @@ class ImagesFragment : Fragment() {
         NotificationManagerCompat.from(bind.root.context).apply {
             notificationBuilder.setContentText(getString(R.string.download_complete))
                 .setProgress(0, 0, false)
-            notify(1, notificationBuilder.build())
-            cancel(1)
+            if (ActivityCompat.checkSelfPermission(
+                    bind.root.context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                notify(1, notificationBuilder.build())
+                //cancel(1)
+            }
         }
     }
 
