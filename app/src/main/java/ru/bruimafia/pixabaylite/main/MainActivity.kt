@@ -15,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.android.billingclient.api.AcknowledgePurchaseParams
+import com.android.billingclient.api.AcknowledgePurchaseResponseListener
 import com.android.billingclient.api.BillingClient
 import com.android.billingclient.api.BillingClientStateListener
 import com.android.billingclient.api.BillingFlowParams
@@ -25,7 +26,6 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
-import com.google.android.gms.ads.MobileAds
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
@@ -39,6 +39,9 @@ import com.google.android.ump.ConsentForm
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import ru.bruimafia.pixabaylite.App
 import ru.bruimafia.pixabaylite.R
 import ru.bruimafia.pixabaylite.adapter.TabAdapter
 import ru.bruimafia.pixabaylite.databinding.ActivityMainBinding
@@ -91,7 +94,6 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
                 UserMessagingPlatform.loadAndShowConsentFormIfRequired(
                     this@MainActivity
                 ) { loadAndShowError ->
-                    // Consent gathering failed.
                     if (loadAndShowError != null) {
                         Log.w(
                             Constants.TAG, String.format(
@@ -102,7 +104,6 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
                         )
                     }
 
-                    // Consent has been gathered.
                     if (consentInformation.canRequestAds()) {
                         initializeMobileAdsSdk()
                     }
@@ -129,7 +130,7 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
             }
         }.attach()
 
-        billingClient = BillingClient.newBuilder(bind.root.context)
+        billingClient = BillingClient.newBuilder(App.instance)
             .setListener(this)
             .enablePendingPurchases()
             .build()
@@ -238,9 +239,9 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
             }
     }
 
-    // обноаление информации о покупках
+    // обновление информации о покупках
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
-        billingClient = BillingClient.newBuilder(bind.root.context)
+        billingClient = BillingClient.newBuilder(App.instance)
             .setListener(this)
             .enablePendingPurchases()
             .build()

@@ -15,6 +15,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.SearchView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -22,14 +23,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
-import com.yandex.mobile.ads.banner.AdSize
 import com.yandex.mobile.ads.banner.BannerAdEventListener
+import com.yandex.mobile.ads.banner.BannerAdSize
 import com.yandex.mobile.ads.banner.BannerAdView
+import com.yandex.mobile.ads.common.AdError
 import com.yandex.mobile.ads.common.AdRequest
+import com.yandex.mobile.ads.common.AdRequestConfiguration
 import com.yandex.mobile.ads.common.AdRequestError
 import com.yandex.mobile.ads.common.ImpressionData
 import com.yandex.mobile.ads.interstitial.InterstitialAd
 import com.yandex.mobile.ads.interstitial.InterstitialAdEventListener
+import com.yandex.mobile.ads.interstitial.InterstitialAdLoadListener
+import com.yandex.mobile.ads.interstitial.InterstitialAdLoader
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
@@ -46,6 +51,7 @@ import ru.bruimafia.pixabaylite.databinding.FragmentVideosBinding
 import ru.bruimafia.pixabaylite.model.video.Video
 import ru.bruimafia.pixabaylite.util.Constants
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
+import kotlin.math.roundToInt
 
 class VideosFragment : Fragment() {
 
@@ -54,8 +60,19 @@ class VideosFragment : Fragment() {
     private lateinit var disposable: Disposable
     private lateinit var searchView: SearchView
 
-    private var yandexInterstitialAd: InterstitialAd? = null
+    private var interstitialAd: InterstitialAd? = null
+    private var interstitialAdLoader: InterstitialAdLoader? = null
     private var bannerAd: BannerAdView? = null
+    private val adSize: BannerAdSize
+        get() {
+            var adWidthPixels = bind.banner.width
+            if (adWidthPixels == 0) {
+                adWidthPixels = resources.displayMetrics.widthPixels
+            }
+            val adWidth = (adWidthPixels / resources.displayMetrics.density).roundToInt()
+
+            return BannerAdSize.stickySize(requireActivity(), adWidth)
+        }
 
     private var order = "popular"
     private var query = ""
@@ -68,10 +85,13 @@ class VideosFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         bind = DataBindingUtil.inflate(inflater, R.layout.fragment_videos, container, false)
+        return bind.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         loadData(query, order, page)
-        initYandexAdsInterstitial()
-        loadingYandexAdsBanner()
 
         adapter.setReachEndListener(object : VideoAdapter.OnReachEndListener {
             override fun onLoad() {
@@ -82,7 +102,8 @@ class VideosFragment : Fragment() {
 
         adapter.setSaveButtonListener(object : VideoAdapter.OnSaveButtonListener {
             override fun onSave(video: Video, position: Int) {
-                showYandexAdsInterstitial()
+                if (!SharedPreferencesManager.isFullVersion)
+                    showAd()
                 if (video.videos.large.url != "")
                     downloadFile(video.videos.large.url.replace("https://player.vimeo.com/external/", ""))
                 else
@@ -115,7 +136,25 @@ class VideosFragment : Fragment() {
             }
         })
 
-        return bind.root
+        bind.banner.viewTreeObserver.addOnGlobalLayoutListener(object :
+            ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                bind.banner.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                if (!SharedPreferencesManager.isFullVersion)
+                    bannerAd = loadBannerAd(adSize)
+            }
+        })
+
+        interstitialAdLoader = InterstitialAdLoader(requireActivity()).apply {
+            setAdLoadListener(object : InterstitialAdLoadListener {
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    this@VideosFragment.interstitialAd = interstitialAd
+                }
+
+                override fun onAdFailedToLoad(adRequestError: AdRequestError) {}
+            })
+        }
+        loadInterstitialAd()
     }
 
     // меню и строка поиска
@@ -268,102 +307,64 @@ class VideosFragment : Fragment() {
         }
     }
 
-    // показ межстраничной Yandex рекламы в приложении
-    private fun showYandexAdsInterstitial() {
-        if (yandexInterstitialAd?.isLoaded == true && !SharedPreferencesManager.isFullVersion)
-            yandexInterstitialAd?.show()
-        else
-            Log.d(Constants.TAG, "Yandex: the interstitial ad wasn't ready yet")
+    // инициализация межстраничной Яндекс рекламы в приложении
+    private fun loadInterstitialAd() {
+        val adRequestConfiguration = AdRequestConfiguration.Builder(resources.getString(R.string.ads_yandex_interstitialAd_video_unitId)).build()
+        interstitialAdLoader?.loadAd(adRequestConfiguration)
     }
 
-    // инициализация межстраничной Яндекс рекламы в приложении
-    private fun initYandexAdsInterstitial() {
-        yandexInterstitialAd = InterstitialAd(bind.root.context)
-        yandexInterstitialAd?.setAdUnitId(getString(R.string.ads_yandex_interstitialAd_video_unitId))
-        yandexInterstitialAd?.loadAd(AdRequest.Builder().build())
-        yandexInterstitialAd?.setInterstitialAdEventListener(object : InterstitialAdEventListener {
-            override fun onAdLoaded() {
-                Log.d(Constants.TAG, "Yandex: onAdLoaded")
-            }
+    // показ межстраничной Yandex рекламы в приложении
+    private fun showAd() {
+        interstitialAd?.apply {
+            setAdEventListener(object : InterstitialAdEventListener {
+                override fun onAdShown() {
+                    loadInterstitialAd()
+                }
 
-            override fun onAdFailedToLoad(adRequestError: AdRequestError) {
-                Log.d(Constants.TAG, "Yandex (onAdFailedToLoad): " + adRequestError.description)
-                yandexInterstitialAd = null
-                initYandexAdsInterstitial()
-            }
+                override fun onAdFailedToShow(adError: AdError) {}
 
-            override fun onImpression(impressionData: ImpressionData?) {
-                Log.d(Constants.TAG, "Yandex: onImpression")
-            }
+                override fun onAdDismissed() {
+                    interstitialAd?.setAdEventListener(null)
+                    interstitialAd = null
+                    loadInterstitialAd()
+                    showMessage(getString(R.string.download_video_started))
+                }
 
-            override fun onAdShown() {
-                Log.d(Constants.TAG, "Yandex: onAdShown")
-            }
-
-            override fun onAdDismissed() {
-                Log.d(Constants.TAG, "Yandex: onAdDismissed")
-                yandexInterstitialAd = null
-                initYandexAdsInterstitial()
-                showMessage(getString(R.string.download_video_started))
-            }
-
-            override fun onAdClicked() {
-                Log.d(Constants.TAG, "Yandex: onAdClicked")
-            }
-
-            override fun onLeftApplication() {
-                Log.d(Constants.TAG, "Yandex: onLeftApplication")
-            }
-
-            override fun onReturnedToApplication() {
-                Log.d(Constants.TAG, "Yandex: onReturnedToApplication")
-            }
-
-        })
+                override fun onAdClicked() {}
+                override fun onAdImpression(impressionData: ImpressionData?) {}
+            })
+            show(requireActivity())
+        }
     }
 
     // инициализация и отображение баннера Яндекс рекламы в приложении
-    private fun loadingYandexAdsBanner() {
-        bannerAd = bind.bannerAdView
-        bannerAd!!.setAdUnitId(getString(R.string.ads_yandex_banner_video_id))
-        bannerAd!!.setAdSize(AdSize.stickySize(bind.root.context, Resources.getSystem().displayMetrics.widthPixels))
-
-        val adRequest = AdRequest.Builder().build()
-
-        bannerAd!!.setBannerAdEventListener(object : BannerAdEventListener {
-            override fun onAdLoaded() {
-                Log.d(Constants.TAG, "Yandex Banner: ")
-            }
-
-            override fun onAdFailedToLoad(error: AdRequestError) {
-                Log.d(Constants.TAG, "Yandex Banner: Banner ad failed to load with code ${error.code}: ${error.description}")
-            }
-
-            override fun onAdClicked() {
-                Log.d(Constants.TAG, "Yandex Banner: Banner ad clicked")
-            }
-
-            override fun onLeftApplication() {
-                Log.d(Constants.TAG, "Yandex Banner: Left application")
-            }
-
-            override fun onReturnedToApplication() {
-                Log.d(Constants.TAG, "Yandex Banner: Returned to application")
-            }
-
-            override fun onImpression(data: ImpressionData?) {
-                Log.d(Constants.TAG, "Yandex Banner: Impression: ${data?.rawData}")
-            }
-        })
-
-        if (!SharedPreferencesManager.isFullVersion)
-            bannerAd?.loadAd(adRequest)
+    private fun loadBannerAd(adSize: BannerAdSize): BannerAdView {
+        return bind.banner.apply {
+            setAdSize(adSize)
+            setAdUnitId(resources.getString(R.string.ads_yandex_banner_video_id))
+            setBannerAdEventListener(object : BannerAdEventListener {
+                override fun onAdLoaded() {}
+                override fun onAdFailedToLoad(adRequestError: AdRequestError) {}
+                override fun onAdClicked() {}
+                override fun onLeftApplication() {}
+                override fun onReturnedToApplication() {}
+                override fun onImpression(impressionData: ImpressionData?) {}
+            })
+            loadAd(AdRequest.Builder().build())
+        }
     }
+
+    private fun destroyInterstitialAd() {
+        interstitialAd?.setAdEventListener(null)
+        interstitialAd = null
+    }
+
     override fun onDestroy() {
         if (!disposable.isDisposed)
             disposable.dispose()
-        yandexInterstitialAd?.destroy()
-        yandexInterstitialAd = null
+        interstitialAdLoader?.setAdLoadListener(null)
+        interstitialAdLoader = null
+        destroyInterstitialAd()
         bannerAd?.destroy()
         bannerAd = null
         super.onDestroy()

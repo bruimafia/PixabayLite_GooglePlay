@@ -21,18 +21,13 @@ class App : Application() {
         SharedPreferencesManager.init(this)
 
         // OneSignal Initialization
-        OneSignal.setLogLevel(OneSignal.LOG_LEVEL.VERBOSE, OneSignal.LOG_LEVEL.NONE)
         OneSignal.initWithContext(this)
-        OneSignal.setAppId(getString(R.string.onesignal_app_id))
 
         // Google Mobile Ads
         //MobileAds.initialize(this)
 
         // Yandex Mobile Ads
-        YandexMobileAds.initialize(this) { Log.d(Constants.TAG, "YandexMobileAds: SDK initialized") }
-
-        // Yandex AppMetrica Push
-        //YandexMetricaPush.init(applicationContext)
+        //YandexMobileAds.initialize(this) { Log.d(Constants.TAG, "YandexMobileAds: SDK initialized") }
 
         // Yandex AppMetrica
         val config: YandexMetricaConfig = YandexMetricaConfig.newConfigBuilder(getString(R.string.appMetrica_api_key)).build()

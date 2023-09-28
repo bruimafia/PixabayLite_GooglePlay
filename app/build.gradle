@@ -7,14 +7,14 @@ plugins {
 }
 
 android {
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         applicationId "ru.bruimafia.pixabaylite"
         minSdk 21
-        targetSdk 33
-        versionCode 35
-        versionName "1.7.3"
+        targetSdk 34
+        versionCode 36
+        versionName "1.7.4"
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         setProperty("archivesBaseName", "pixabay_lite-$versionName-code$versionCode")
@@ -44,7 +44,7 @@ android {
 }
 
 dependencies {
-    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.work:work-runtime-ktx:2.8.1'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
@@ -54,30 +54,57 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    implementation 'com.squareup.retrofit2:retrofit:2.9.0' // Retrofit & OkHttp
-    implementation 'com.squareup.retrofit2:adapter-rxjava:2.9.0'
-    implementation 'com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0'
-    implementation 'com.squareup.retrofit2:converter-gson:2.9.0' // JSON Converter
-    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'// RxJava
-    implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
-    implementation 'com.squareup.picasso:picasso:2.71828' // Picasso
-    implementation 'com.intuit.sdp:sdp-android:1.1.0' // SDP - a scalable size unit / аналог папок dimens
-    implementation 'com.intuit.ssp:ssp-android:1.1.0' // SDP - a scalable size unit for text / аналог папок dimens
-    implementation 'com.onesignal:OneSignal:4.8.3' // OneSignal
-    implementation 'com.yandex.android:mobileads:5.10.0' // Yandex Mobile Ads
-    implementation 'com.yandex.ads.mediation:mobileads-admob:22.1.0.0' // Yandex адаптер мобильной медиации AdMob
-    implementation 'com.yandex.android:mobmetricalib:5.3.0' // Yandex AppMetrica
-    implementation 'com.yandex.android:mobmetricapushlib:2.3.1' // Yandex AppMetrica Push
     implementation 'com.google.android.gms:play-services-base:18.2.0'
     implementation 'com.google.android.play:core:1.10.3' // Play Core
-    implementation 'com.google.android.gms:play-services-ads:22.1.0' // Google Mobile Ads
-    implementation 'com.google.android.ump:user-messaging-platform:2.1.0' // Google User Messaging Platform
-    implementation platform('com.google.firebase:firebase-bom:32.2.0') // Firebase BoM
+    implementation 'com.google.android.gms:play-services-ads:22.4.0' // Google Mobile Ads
+
+    // Retrofit & OkHttp
+    implementation 'com.squareup.retrofit2:retrofit:2.9.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava:2.9.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.9.0' // Retrofit logger
+    implementation 'com.jakewharton.retrofit:retrofit2-rxjava2-adapter:1.0.0'
+
+    // JSON Converter
+    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+
+    // RxJava
+    implementation 'io.reactivex.rxjava2:rxandroid:2.1.1'
+    implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
+
+    // Picasso
+    implementation 'com.squareup.picasso:picasso:2.71828'
+
+    // SDP - a scalable size unit / аналог папок dimens
+    implementation 'com.intuit.sdp:sdp-android:1.1.0'
+
+    // SDP - a scalable size unit for text / аналог папок dimens
+    implementation 'com.intuit.ssp:ssp-android:1.1.0'
+
+    // OneSignal
+    implementation 'com.onesignal:OneSignal:5.0.2'
+
+    // Yandex Mobile Ads
+    implementation 'com.yandex.android:mobileads:6.0.1'
+    implementation 'com.yandex.ads.mediation:mobileads-admob:22.1.0.0' // Yandex адаптер мобильной медиации AdMob
+
+    // Yandex AppMetrica
+    implementation 'com.yandex.android:mobmetricalib:5.3.0'
+
+    // Stfalcon ImageViewer
+    implementation 'com.github.stfalcon-studio:StfalconImageViewer:v1.0.1'
+
+    // AwesomeSplash
+    implementation 'com.github.ViksaaSkool:AwesomeSplash:v1.0.0'
+
+    // Firebase BoM
+    implementation platform('com.google.firebase:firebase-bom:32.3.1')
     implementation 'com.google.firebase:firebase-analytics-ktx' // Google Analytics library
     implementation 'com.google.firebase:firebase-crashlytics-ktx' // Google Crashlytics library
     implementation 'com.google.firebase:firebase-messaging-ktx' // Firebase Cloud Messaging
-    implementation 'com.github.stfalcon-studio:StfalconImageViewer:v1.0.1' // Stfalcon ImageViewer
-    implementation 'com.github.ViksaaSkool:AwesomeSplash:v1.0.0' // AwesomeSplash
-    implementation 'com.squareup.okhttp3:logging-interceptor:3.9.0' // Retrofit logger
-    implementation 'com.android.billingclient:billing-ktx:6.0.1' // Google In-App Billing
+
+    // Google In-App Billing
+    implementation 'com.android.billingclient:billing-ktx:6.0.1'
+
+    // Google User Messaging Platform
+    implementation 'com.google.android.ump:user-messaging-platform:2.1.0'
 }

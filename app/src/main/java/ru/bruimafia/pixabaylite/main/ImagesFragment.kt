@@ -19,6 +19,7 @@ import android.view.MenuInflater
 import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.widget.SearchView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
@@ -32,14 +33,18 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
 import com.google.android.play.core.review.ReviewManagerFactory
 import com.jakewharton.retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory
-import com.yandex.mobile.ads.banner.AdSize
 import com.yandex.mobile.ads.banner.BannerAdEventListener
+import com.yandex.mobile.ads.banner.BannerAdSize
 import com.yandex.mobile.ads.banner.BannerAdView
+import com.yandex.mobile.ads.common.AdError
 import com.yandex.mobile.ads.common.AdRequest
+import com.yandex.mobile.ads.common.AdRequestConfiguration
 import com.yandex.mobile.ads.common.AdRequestError
 import com.yandex.mobile.ads.common.ImpressionData
 import com.yandex.mobile.ads.interstitial.InterstitialAd
 import com.yandex.mobile.ads.interstitial.InterstitialAdEventListener
+import com.yandex.mobile.ads.interstitial.InterstitialAdLoadListener
+import com.yandex.mobile.ads.interstitial.InterstitialAdLoader
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.disposables.Disposable
 import io.reactivex.schedulers.Schedulers
@@ -62,6 +67,7 @@ import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import java.io.File
 import java.io.OutputStream
 import java.util.Objects
+import kotlin.math.roundToInt
 
 
 class ImagesFragment : Fragment() {
@@ -73,8 +79,19 @@ class ImagesFragment : Fragment() {
     private lateinit var searchView: SearchView
 
     //private var googleInterstitialAd: InterstitialAd? = null
-    private var yandexInterstitialAd: InterstitialAd? = null
+    private var interstitialAd: InterstitialAd? = null
+    private var interstitialAdLoader: InterstitialAdLoader? = null
     private var bannerAd: BannerAdView? = null
+    private val adSize: BannerAdSize
+        get() {
+            var adWidthPixels = bind.banner.width
+            if (adWidthPixels == 0) {
+                adWidthPixels = resources.displayMetrics.widthPixels
+            }
+            val adWidth = (adWidthPixels / resources.displayMetrics.density).roundToInt()
+
+            return BannerAdSize.stickySize(requireActivity(), adWidth)
+        }
 
     private var order = "popular"
     private var query = ""
@@ -88,11 +105,14 @@ class ImagesFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         bind = DataBindingUtil.inflate(inflater, R.layout.fragment_images, container, false)
+        return bind.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
         loadData(query, order, page)
         //initGoogleAdsInterstitial()
-        initYandexAdsInterstitial()
-        loadingYandexAdsBanner()
 
         adapter.setReachEndListener(object : ImageAdapter.OnReachEndListener {
             override fun onLoad() {
@@ -103,7 +123,8 @@ class ImagesFragment : Fragment() {
 
         adapter.setSaveButtonListener(object : ImageAdapter.OnSaveButtonListener {
             override fun onSave(image: Image, position: Int) {
-                showYandexAdsInterstitial()
+                if (!SharedPreferencesManager.isFullVersion)
+                    showAd()
                 downloadFile(image.imageURL.replace("https://pixabay.com/get/", ""))
             }
         })
@@ -133,7 +154,25 @@ class ImagesFragment : Fragment() {
             }
         })
 
-        return bind.root
+        bind.banner.viewTreeObserver.addOnGlobalLayoutListener(object :
+            ViewTreeObserver.OnGlobalLayoutListener {
+            override fun onGlobalLayout() {
+                bind.banner.viewTreeObserver.removeOnGlobalLayoutListener(this)
+                if (!SharedPreferencesManager.isFullVersion)
+                    bannerAd = loadBannerAd(adSize)
+            }
+        })
+
+        interstitialAdLoader = InterstitialAdLoader(requireActivity()).apply {
+            setAdLoadListener(object : InterstitialAdLoadListener {
+                override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                    this@ImagesFragment.interstitialAd = interstitialAd
+                }
+
+                override fun onAdFailedToLoad(adRequestError: AdRequestError) {}
+            })
+        }
+        loadInterstitialAd()
     }
 
     // меню и строка поиска
@@ -333,25 +372,100 @@ class ImagesFragment : Fragment() {
         return false
     }
 
-    /*
-    // показ межстраничной Google рекламы в приложении
-    private fun showGoogleAdsInterstitial() {
-        if (googleInterstitialAd != null && !SharedPreferencesManager.isFullVersion)
-            googleInterstitialAd?.show(this)
-        else if (googleInterstitialAd == null && yandexInterstitialAd?.isLoaded == true && !SharedPreferencesManager.isFullVersion)
-            yandexInterstitialAd?.show()
-        else
-            Log.d(TAG, "Google & Yandex: the interstitial ad wasn't ready yet")
+    // инициализация межстраничной Яндекс рекламы в приложении
+    private fun loadInterstitialAd() {
+        val adRequestConfiguration = AdRequestConfiguration.Builder(resources.getString(R.string.ads_yandex_interstitialAd_image_unitId)).build()
+        interstitialAdLoader?.loadAd(adRequestConfiguration)
     }
-    */
 
     // показ межстраничной Yandex рекламы в приложении
-    private fun showYandexAdsInterstitial() {
-        if (yandexInterstitialAd?.isLoaded == true && !SharedPreferencesManager.isFullVersion)
-            yandexInterstitialAd?.show()
-        else
-            Log.d(Constants.TAG, "Yandex: the interstitial ad wasn't ready yet")
+    private fun showAd() {
+        interstitialAd?.apply {
+            setAdEventListener(object : InterstitialAdEventListener {
+                override fun onAdShown() {
+                    loadInterstitialAd()
+                }
+
+                override fun onAdFailedToShow(adError: AdError) {}
+
+                override fun onAdDismissed() {
+                    interstitialAd?.setAdEventListener(null)
+                    interstitialAd = null
+                    loadInterstitialAd()
+                    showMessage(getString(R.string.download_image_started))
+                }
+
+                override fun onAdClicked() {}
+                override fun onAdImpression(impressionData: ImpressionData?) {}
+            })
+            show(requireActivity())
+        }
     }
+
+    // инициализация и отображение баннера Яндекс рекламы в приложении
+    private fun loadBannerAd(adSize: BannerAdSize): BannerAdView {
+        return bind.banner.apply {
+            setAdSize(adSize)
+            setAdUnitId(resources.getString(R.string.ads_yandex_banner_image_id))
+            setBannerAdEventListener(object : BannerAdEventListener {
+                override fun onAdLoaded() {}
+                override fun onAdFailedToLoad(adRequestError: AdRequestError) {}
+                override fun onAdClicked() {}
+                override fun onLeftApplication() {}
+                override fun onReturnedToApplication() {}
+                override fun onImpression(impressionData: ImpressionData?) {}
+            })
+            loadAd(AdRequest.Builder().build())
+        }
+    }
+
+    // запуск уведомления о скачивании файла
+    private fun startNotificationDownload() {
+        notificationBuilder = NotificationCompat.Builder(bind.root.context, BuildConfig.APPLICATION_ID).apply {
+            setContentTitle(getString(R.string.download_process))
+            setSmallIcon(R.drawable.ic_download)
+            priority = NotificationCompat.PRIORITY_LOW
+        }
+
+        NotificationManagerCompat.from(bind.root.context).apply {
+            notificationBuilder.setProgress(0, 0, true)
+            if (ActivityCompat.checkSelfPermission(
+                    bind.root.context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                notify(1, notificationBuilder.build())
+            }
+        }
+    }
+
+    // остановка уведомления о скачивании файла
+    private fun stopNotificationDownload() {
+        NotificationManagerCompat.from(bind.root.context).apply {
+            notificationBuilder.setContentText(getString(R.string.download_complete))
+                .setProgress(0, 0, false)
+            if (ActivityCompat.checkSelfPermission(
+                    bind.root.context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                notify(1, notificationBuilder.build())
+                //cancel(1)
+            }
+        }
+    }
+
+    /*
+  // показ межстраничной Google рекламы в приложении
+  private fun showGoogleAdsInterstitial() {
+      if (googleInterstitialAd != null && !SharedPreferencesManager.isFullVersion)
+          googleInterstitialAd?.show(this)
+      else if (googleInterstitialAd == null && yandexInterstitialAd?.isLoaded == true && !SharedPreferencesManager.isFullVersion)
+          yandexInterstitialAd?.show()
+      else
+          Log.d(TAG, "Google & Yandex: the interstitial ad wasn't ready yet")
+  }
+  */
 
     /*
     // инициализация межстраничной Google рекламы в приложении
@@ -398,126 +512,6 @@ class ImagesFragment : Fragment() {
     }
     */
 
-    // инициализация межстраничной Яндекс рекламы в приложении
-    private fun initYandexAdsInterstitial() {
-        yandexInterstitialAd = InterstitialAd(bind.root.context)
-        yandexInterstitialAd?.setAdUnitId(getString(R.string.ads_yandex_interstitialAd_image_unitId))
-        yandexInterstitialAd?.loadAd(AdRequest.Builder().build())
-        yandexInterstitialAd?.setInterstitialAdEventListener(object : InterstitialAdEventListener {
-            override fun onAdLoaded() {
-                Log.d(Constants.TAG, "Yandex: onAdLoaded")
-            }
-
-            override fun onAdFailedToLoad(adRequestError: AdRequestError) {
-                Log.d(Constants.TAG, "Yandex (onAdFailedToLoad): " + adRequestError.description)
-                yandexInterstitialAd = null
-                initYandexAdsInterstitial()
-            }
-
-            override fun onImpression(impressionData: ImpressionData?) {
-                Log.d(Constants.TAG, "Yandex: onImpression")
-            }
-
-            override fun onAdShown() {
-                Log.d(Constants.TAG, "Yandex: onAdShown")
-            }
-
-            override fun onAdDismissed() {
-                Log.d(Constants.TAG, "Yandex: onAdDismissed")
-                yandexInterstitialAd = null
-                initYandexAdsInterstitial()
-                showMessage(getString(R.string.download_image_started))
-            }
-
-            override fun onAdClicked() {
-                Log.d(Constants.TAG, "Yandex: onAdClicked")
-            }
-
-            override fun onLeftApplication() {
-                Log.d(Constants.TAG, "Yandex: onLeftApplication")
-            }
-
-            override fun onReturnedToApplication() {
-                Log.d(Constants.TAG, "Yandex: onReturnedToApplication")
-            }
-
-        })
-    }
-
-    // инициализация и отображение баннера Яндекс рекламы в приложении
-    private fun loadingYandexAdsBanner() {
-        bannerAd = bind.bannerAdView
-        bannerAd!!.setAdUnitId(getString(R.string.ads_yandex_banner_image_id))
-        bannerAd!!.setAdSize(AdSize.stickySize(bind.root.context, Resources.getSystem().displayMetrics.widthPixels))
-
-        val adRequest = AdRequest.Builder().build()
-
-        bannerAd!!.setBannerAdEventListener(object : BannerAdEventListener {
-            override fun onAdLoaded() {
-                Log.d(Constants.TAG, "Yandex Banner: ")
-            }
-
-            override fun onAdFailedToLoad(error: AdRequestError) {
-                Log.d(Constants.TAG, "Yandex Banner: Banner ad failed to load with code ${error.code}: ${error.description}")
-            }
-
-            override fun onAdClicked() {
-                Log.d(Constants.TAG, "Yandex Banner: Banner ad clicked")
-            }
-
-            override fun onLeftApplication() {
-                Log.d(Constants.TAG, "Yandex Banner: Left application")
-            }
-
-            override fun onReturnedToApplication() {
-                Log.d(Constants.TAG, "Yandex Banner: Returned to application")
-            }
-
-            override fun onImpression(data: ImpressionData?) {
-                Log.d(Constants.TAG, "Yandex Banner: Impression: ${data?.rawData}")
-            }
-        })
-
-        if (!SharedPreferencesManager.isFullVersion)
-            bannerAd?.loadAd(adRequest)
-    }
-
-    // запуск уведомления о скачивании файла
-    private fun startNotificationDownload() {
-        notificationBuilder = NotificationCompat.Builder(bind.root.context, BuildConfig.APPLICATION_ID).apply {
-            setContentTitle(getString(R.string.download_process))
-            setSmallIcon(R.drawable.ic_download)
-            priority = NotificationCompat.PRIORITY_LOW
-        }
-
-        NotificationManagerCompat.from(bind.root.context).apply {
-            notificationBuilder.setProgress(0, 0, true)
-            if (ActivityCompat.checkSelfPermission(
-                    bind.root.context,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                notify(1, notificationBuilder.build())
-            }
-        }
-    }
-
-    // остановка уведомления о скачивании файла
-    private fun stopNotificationDownload() {
-        NotificationManagerCompat.from(bind.root.context).apply {
-            notificationBuilder.setContentText(getString(R.string.download_complete))
-                .setProgress(0, 0, false)
-            if (ActivityCompat.checkSelfPermission(
-                    bind.root.context,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                notify(1, notificationBuilder.build())
-                //cancel(1)
-            }
-        }
-    }
-
     // не работает с включенным VPN
 //    private fun downloadFileWithDM(url: String) {
 //        val downloadManager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
@@ -536,11 +530,17 @@ class ImagesFragment : Fragment() {
 //        showMessage("Изображение будет сохранено в папку PixabayLite")
 //    }
 
+    private fun destroyInterstitialAd() {
+        interstitialAd?.setAdEventListener(null)
+        interstitialAd = null
+    }
+
     override fun onDestroy() {
         if (!disposable.isDisposed)
             disposable.dispose()
-        yandexInterstitialAd?.destroy()
-        yandexInterstitialAd = null
+        interstitialAdLoader?.setAdLoadListener(null)
+        interstitialAdLoader = null
+        destroyInterstitialAd()
         bannerAd?.destroy()
         bannerAd = null
         super.onDestroy()

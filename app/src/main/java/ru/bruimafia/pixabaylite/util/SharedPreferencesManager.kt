@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 
 object SharedPreferencesManager {
+
     private const val NAME = "ru.bruimafia.pixabaylite"
     private const val IS_FULL_VERSION = "FULL_VERSION" // версия приложения
     private const val IS_FIRST_LAUNCH = "FIRST_LAUNCH" // первый запуск

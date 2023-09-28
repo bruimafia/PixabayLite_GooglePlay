@@ -22,9 +22,13 @@
     <color name="white_disabled">#61FFFFFF</color> <!-- 38% -->
     <color name="white_outline_surface">#1FFFFFFF</color> <!-- 12% -->
 
-    <color name="black_high">#000000</color> <!-- 100% -->
-    <color name="black_medium">#BD000000</color> <!-- 74% -->
+    <color name="black_high">#DE000000</color> <!-- 87% -->
+    <color name="black_medium">#99000000</color> <!-- 60% -->
     <color name="black_disabled">#61000000</color> <!-- 38% -->
+
+<!--    <color name="black_high">#000000</color> &lt;!&ndash; 100% &ndash;&gt;-->
+<!--    <color name="black_medium">#BD000000</color> &lt;!&ndash; 74% &ndash;&gt;-->
+<!--    <color name="black_disabled">#61000000</color> &lt;!&ndash; 38% &ndash;&gt;-->
 
     <!-- Material Design: Orange Color -->
     <color name="orange_50">#FFF3E0</color>
