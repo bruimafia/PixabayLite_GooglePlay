@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.content.Context
 import android.os.Build
 import android.util.Log
+import com.google.firebase.FirebaseApp
 import com.onesignal.OneSignal
 import com.yandex.metrica.YandexMetrica
 import com.yandex.metrica.YandexMetricaConfig
@@ -20,6 +21,9 @@ class App : Application() {
         instance = this
         SharedPreferencesManager.init(this)
 
+        // Init FirebaseApp for all processes
+        FirebaseApp.initializeApp(this)
+
         // OneSignal Initialization
         OneSignal.initWithContext(this)
 
@@ -31,12 +35,11 @@ class App : Application() {
 
         // Yandex AppMetrica
         val config: YandexMetricaConfig = YandexMetricaConfig.newConfigBuilder(getString(R.string.appMetrica_api_key)).build()
-        YandexMetrica.activate(applicationContext, config)
-        YandexMetrica.enableActivityAutoTracking(this)
+        YandexMetrica.activate(this, config)
 
         createNotificationChannel()
 //        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
-//            AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_YES);
+//            AppCompatDelegate.setDefaultNightMode(MODE_NIGHT_YES)
     }
 
     private fun createNotificationChannel() {

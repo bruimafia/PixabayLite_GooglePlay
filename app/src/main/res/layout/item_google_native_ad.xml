@@ -5,156 +5,160 @@
 
     </data>
 
-    <com.google.android.gms.ads.nativead.NativeAdView
+    <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"/>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:background="@color/base_level1"
-            android:minHeight="@dimen/_40sdp"
-            android:orientation="vertical">
+<!--    <com.google.android.gms.ads.nativead.NativeAdView-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="wrap_content">-->
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="start"
-                android:background="@color/yellow_200"
-                android:padding="@dimen/_1sdp"
-                android:text="@string/ad_info"
-                android:textColor="@color/black_medium"
-                android:textSize="@dimen/_10ssp" />
+<!--        <LinearLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="wrap_content"-->
+<!--            android:layout_gravity="center"-->
+<!--            android:background="@color/base_level1"-->
+<!--            android:minHeight="@dimen/_40sdp"-->
+<!--            android:orientation="vertical">-->
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingStart="@dimen/_7sdp"
-                android:paddingTop="@dimen/_3sdp"
-                android:paddingEnd="@dimen/_7sdp">
+<!--            <TextView-->
+<!--                android:layout_width="wrap_content"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:layout_gravity="start"-->
+<!--                android:background="@color/yellow_200"-->
+<!--                android:padding="@dimen/_1sdp"-->
+<!--                android:text="@string/ad_info"-->
+<!--                android:textColor="@color/black_medium"-->
+<!--                android:textSize="@dimen/_10ssp" />-->
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+<!--            <LinearLayout-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:orientation="vertical"-->
+<!--                android:paddingStart="@dimen/_7sdp"-->
+<!--                android:paddingTop="@dimen/_3sdp"-->
+<!--                android:paddingEnd="@dimen/_7sdp">-->
 
-                    <ImageView
-                        android:id="@+id/ad_app_icon"
-                        android:layout_width="@dimen/_40sdp"
-                        android:layout_height="@dimen/_40sdp"
-                        android:layout_marginEnd="@dimen/_5sdp"
-                        android:adjustViewBounds="true"
-                        android:contentDescription="@string/app_name" />
+<!--                <LinearLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:orientation="horizontal">-->
 
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
+<!--                    <ImageView-->
+<!--                        android:id="@+id/ad_app_icon"-->
+<!--                        android:layout_width="@dimen/_40sdp"-->
+<!--                        android:layout_height="@dimen/_40sdp"-->
+<!--                        android:layout_marginEnd="@dimen/_5sdp"-->
+<!--                        android:adjustViewBounds="true"-->
+<!--                        android:contentDescription="@string/app_name" />-->
 
-                        <TextView
-                            android:id="@+id/ad_headline"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/white_high"
-                            android:textSize="@dimen/_14ssp"
-                            android:textStyle="bold" />
+<!--                    <LinearLayout-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:orientation="vertical">-->
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginTop="@dimen/_2sdp">
+<!--                        <TextView-->
+<!--                            android:id="@+id/ad_headline"-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:textColor="@color/white_high"-->
+<!--                            android:textSize="@dimen/_14ssp"-->
+<!--                            android:textStyle="bold" />-->
 
-                            <TextView
-                                android:id="@+id/ad_advertiser"
-                                android:layout_width="wrap_content"
-                                android:layout_height="match_parent"
-                                android:gravity="bottom"
-                                android:textColor="@color/white_medium"
-                                android:textSize="@dimen/_12ssp"
-                                android:textStyle="bold" />
+<!--                        <LinearLayout-->
+<!--                            android:layout_width="match_parent"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:layout_marginTop="@dimen/_2sdp">-->
 
-                            <RatingBar
-                                android:id="@+id/ad_stars"
-                                style="?android:attr/ratingBarStyleSmall"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:isIndicator="true"
-                                android:numStars="5"
-                                android:stepSize="0.5" />
+<!--                            <TextView-->
+<!--                                android:id="@+id/ad_advertiser"-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="match_parent"-->
+<!--                                android:gravity="bottom"-->
+<!--                                android:textColor="@color/white_medium"-->
+<!--                                android:textSize="@dimen/_12ssp"-->
+<!--                                android:textStyle="bold" />-->
 
-                        </LinearLayout>
+<!--                            <RatingBar-->
+<!--                                android:id="@+id/ad_stars"-->
+<!--                                style="?android:attr/ratingBarStyleSmall"-->
+<!--                                android:layout_width="wrap_content"-->
+<!--                                android:layout_height="wrap_content"-->
+<!--                                android:isIndicator="true"-->
+<!--                                android:numStars="5"-->
+<!--                                android:stepSize="0.5" />-->
 
-                    </LinearLayout>
+<!--                        </LinearLayout>-->
 
-                </LinearLayout>
+<!--                    </LinearLayout>-->
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical">
+<!--                </LinearLayout>-->
 
-                    <TextView
-                        android:id="@+id/ad_body"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/white_medium"
-                        android:textSize="@dimen/_10ssp" />
+<!--                <LinearLayout-->
+<!--                    android:layout_width="match_parent"-->
+<!--                    android:layout_height="wrap_content"-->
+<!--                    android:orientation="vertical">-->
 
-                    <com.google.android.gms.ads.nativead.MediaView
-                        android:id="@+id/ad_media"
-                        android:layout_width="match_parent"
-                        android:layout_height="@dimen/_155sdp"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_marginTop="@dimen/_5sdp" />
+<!--                    <TextView-->
+<!--                        android:id="@+id/ad_body"-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:textColor="@color/white_medium"-->
+<!--                        android:textSize="@dimen/_10ssp" />-->
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical|end"
-                        android:orientation="horizontal"
-                        android:paddingTop="@dimen/_5sdp"
-                        android:paddingBottom="@dimen/_5sdp">
+<!--                    <com.google.android.gms.ads.nativead.MediaView-->
+<!--                        android:id="@+id/ad_media"-->
+<!--                        android:layout_width="match_parent"-->
+<!--                        android:layout_height="@dimen/_155sdp"-->
+<!--                        android:layout_gravity="center_horizontal"-->
+<!--                        android:layout_marginTop="@dimen/_5sdp" />-->
 
-                        <TextView
-                            android:id="@+id/ad_price"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:paddingStart="@dimen/_3sdp"
-                            android:paddingEnd="@dimen/_3sdp"
-                            android:textColor="@color/white_medium"
-                            android:textSize="@dimen/_10ssp" />
+<!--                    <LinearLayout-->
+<!--                        android:layout_width="wrap_content"-->
+<!--                        android:layout_height="wrap_content"-->
+<!--                        android:layout_gravity="center_vertical|end"-->
+<!--                        android:orientation="horizontal"-->
+<!--                        android:paddingTop="@dimen/_5sdp"-->
+<!--                        android:paddingBottom="@dimen/_5sdp">-->
 
-                        <TextView
-                            android:id="@+id/ad_store"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:paddingStart="@dimen/_3sdp"
-                            android:paddingEnd="@dimen/_8sdp"
-                            android:textColor="@color/white_medium"
-                            android:textSize="@dimen/_10ssp" />
+<!--                        <TextView-->
+<!--                            android:id="@+id/ad_price"-->
+<!--                            android:layout_width="wrap_content"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:paddingStart="@dimen/_3sdp"-->
+<!--                            android:paddingEnd="@dimen/_3sdp"-->
+<!--                            android:textColor="@color/white_medium"-->
+<!--                            android:textSize="@dimen/_10ssp" />-->
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/ad_call_to_action"
-                            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:backgroundTint="@color/accent_200"
-                            android:gravity="center"
-                            android:paddingStart="@dimen/_15sdp"
-                            android:paddingTop="@dimen/_10sdp"
-                            android:paddingEnd="@dimen/_15sdp"
-                            android:paddingBottom="@dimen/_10sdp"
-                            android:textAllCaps="true" />
+<!--                        <TextView-->
+<!--                            android:id="@+id/ad_store"-->
+<!--                            android:layout_width="wrap_content"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:paddingStart="@dimen/_3sdp"-->
+<!--                            android:paddingEnd="@dimen/_8sdp"-->
+<!--                            android:textColor="@color/white_medium"-->
+<!--                            android:textSize="@dimen/_10ssp" />-->
 
-                    </LinearLayout>
+<!--                        <com.google.android.material.button.MaterialButton-->
+<!--                            android:id="@+id/ad_call_to_action"-->
+<!--                            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"-->
+<!--                            android:layout_width="wrap_content"-->
+<!--                            android:layout_height="wrap_content"-->
+<!--                            android:backgroundTint="@color/accent_200"-->
+<!--                            android:gravity="center"-->
+<!--                            android:paddingStart="@dimen/_15sdp"-->
+<!--                            android:paddingTop="@dimen/_10sdp"-->
+<!--                            android:paddingEnd="@dimen/_15sdp"-->
+<!--                            android:paddingBottom="@dimen/_10sdp"-->
+<!--                            android:textAllCaps="true" />-->
 
-                </LinearLayout>
+<!--                    </LinearLayout>-->
 
-            </LinearLayout>
+<!--                </LinearLayout>-->
 
-        </LinearLayout>
+<!--            </LinearLayout>-->
 
-    </com.google.android.gms.ads.nativead.NativeAdView>
+<!--        </LinearLayout>-->
+
+<!--    </com.google.android.gms.ads.nativead.NativeAdView>-->
 </layout>

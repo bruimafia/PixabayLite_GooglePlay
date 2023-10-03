@@ -36,10 +36,6 @@
             android:name="com.google.android.gms.ads.APPLICATION_ID"
             android:value="@string/ads_google_application_id" />
 
-        <meta-data
-            android:name="com.yandex.metrica.push.default_notification_icon"
-            android:resource="@drawable/ic_stat_onesignal_default" />
-
     </application>
 
 </manifest>

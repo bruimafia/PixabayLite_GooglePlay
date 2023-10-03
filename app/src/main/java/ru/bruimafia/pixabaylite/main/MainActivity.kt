@@ -12,7 +12,6 @@ import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import com.android.billingclient.api.AcknowledgePurchaseParams
 import com.android.billingclient.api.AcknowledgePurchaseResponseListener
@@ -26,6 +25,7 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
+import com.android.billingclient.api.QueryPurchasesParams
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.snackbar.Snackbar
@@ -34,20 +34,19 @@ import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
-import com.google.android.ump.ConsentDebugSettings
-import com.google.android.ump.ConsentForm
 import com.google.android.ump.ConsentInformation
 import com.google.android.ump.ConsentRequestParameters
 import com.google.android.ump.UserMessagingPlatform
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import ru.bruimafia.pixabaylite.App
 import ru.bruimafia.pixabaylite.R
 import ru.bruimafia.pixabaylite.adapter.TabAdapter
 import ru.bruimafia.pixabaylite.databinding.ActivityMainBinding
 import ru.bruimafia.pixabaylite.util.Constants
+import ru.bruimafia.pixabaylite.util.Security
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
+import java.io.IOException
 import java.util.concurrent.atomic.AtomicBoolean
+
 
 class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
 
@@ -75,6 +74,18 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
         Manifest.permission.WRITE_EXTERNAL_STORAGE,
         Manifest.permission.POST_NOTIFICATIONS
     )
+
+    private var ackPurchase =
+        AcknowledgePurchaseResponseListener { billingResult ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                SharedPreferencesManager.isFullVersion = true
+                Log.d(Constants.TAG, "Purchase is successful")
+                Log.d(Constants.TAG, "Yay! Purchased")
+                showMessage(getString(R.string.snackbar_reset_app))
+                Log.d(Constants.TAG, "Item Purchased")
+                recreate()
+            }
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -130,10 +141,36 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
             }
         }.attach()
 
-        billingClient = BillingClient.newBuilder(App.instance)
+        billingClient = BillingClient
+            .newBuilder(App.instance)
             .setListener(this)
             .enablePendingPurchases()
             .build()
+
+        billingClient.startConnection(object : BillingClientStateListener {
+            override fun onBillingSetupFinished(billingResult: BillingResult) {
+                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                    billingClient.queryPurchasesAsync(
+                        QueryPurchasesParams
+                            .newBuilder()
+                            .setProductType(BillingClient.ProductType.INAPP)
+                            .build()
+                    ) { _, purchaseList ->
+                        if (purchaseList.size > 0)
+                            handlePurchases(purchaseList)
+                        else
+                            SharedPreferencesManager.isFullVersion = false
+                    }
+                } else handleBillingError(billingResult.responseCode)
+            }
+
+            override fun onBillingServiceDisconnected() {}
+        })
+
+        if (SharedPreferencesManager.isFullVersion)
+            Log.d(Constants.TAG, "Purchase Status : Purchased")
+        else
+            Log.d(Constants.TAG, "Purchase Status : Not Purchased")
 
         checkPermission()
         checkUpdateAvailability()
@@ -145,7 +182,6 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
     private fun initializeMobileAdsSdk() {
         if (isMobileAdsInitializeCalled.get()) return
         isMobileAdsInitializeCalled.set(true)
-        // Initialize the Google Mobile Ads SDK.
     }
 
     // сервис в РФ заблокирован
@@ -241,134 +277,135 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
 
     // обновление информации о покупках
     override fun onPurchasesUpdated(billingResult: BillingResult, purchases: List<Purchase>?) {
-        billingClient = BillingClient.newBuilder(App.instance)
-            .setListener(this)
-            .enablePendingPurchases()
-            .build()
-
         if (billingResult.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-            for (purchase in purchases)
-                handlePurchase(purchase)
+            handlePurchases(purchases)
         } else if (billingResult.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
-            showMessage(getString(R.string.snackbar_reset_app))
-            SharedPreferencesManager.isFullVersion = true
-        } else handleBillingError(billingResult.responseCode)
+            billingClient.queryPurchasesAsync(
+                QueryPurchasesParams
+                    .newBuilder()
+                    .setProductType(BillingClient.ProductType.INAPP)
+                    .build()
+            ) { _, purchaseList ->
+                if (purchaseList.size > 0)
+                    handlePurchases(purchaseList)
+            }
+        } else if (billingResult.responseCode == BillingClient.BillingResponseCode.USER_CANCELED) {
+            Toast.makeText(App.instance, "Purchase Canceled", Toast.LENGTH_SHORT).show()
+            Log.d(Constants.TAG, "Purchase Canceled")
+        } else {
+            handleBillingError(billingResult.responseCode)
+            Toast.makeText(App.instance, "Error " + billingResult.debugMessage, Toast.LENGTH_SHORT).show()
+            Log.d(Constants.TAG, "Error " + billingResult.debugMessage)
+        }
     }
 
     // установка соединения с google play для покупок
     private fun establishConnection() {
-        billingClient.startConnection(object : BillingClientStateListener {
-            override fun onBillingSetupFinished(billingResult: BillingResult) {
-                if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
-                    getSingleInAppDetail()
-                } else retryBillingServiceConnection()
-            }
-
-            override fun onBillingServiceDisconnected() {
-                retryBillingServiceConnection()
-            }
-        })
-    }
-
-    // повторное соединение с google play для покупок
-    private fun retryBillingServiceConnection() {
-        var tries = 1
-        val maxTries = 3
-        var isConnectionEstablished = false
-
-        do {
-            try {
-                billingClient.startConnection(object : BillingClientStateListener {
-                    override fun onBillingServiceDisconnected() {
-                        retryBillingServiceConnection()
-                    }
-
-                    override fun onBillingSetupFinished(billingResult: BillingResult) {
-                        tries++
-                        if (billingResult.responseCode == BillingClient.BillingResponseCode.OK)
-                            isConnectionEstablished = true
-                        else if (tries == maxTries)
-                            handleBillingError(billingResult.responseCode)
-                    }
-                })
-            } catch (e: Exception) {
-                tries++
-            }
-        } while (tries <= maxTries && !isConnectionEstablished)
-
-        if (!isConnectionEstablished)
-            handleBillingError(-1)
-    }
-
-    // список доступных покупок
-    private fun getSingleInAppDetail() {
-        val queryProductDetailsParams =
-            QueryProductDetailsParams.newBuilder()
-                .setProductList(
-                    listOf(
-                        QueryProductDetailsParams.Product.newBuilder()
-                            .setProductId(getString(R.string.billing_product_id))
-                            .setProductType(BillingClient.ProductType.INAPP)
-                            .build()
-                    )
-                )
+        if (billingClient.isReady) {
+            initiatePurchase()
+        } else {
+            billingClient = BillingClient
+                .newBuilder(this)
+                .enablePendingPurchases()
+                .setListener(this)
                 .build()
 
-        billingClient.queryProductDetailsAsync(queryProductDetailsParams) { _, productDetailsList ->
-            launchPurchaseFlow(
-                productDetailsList[0]
-            )
+            billingClient.startConnection(object : BillingClientStateListener {
+                override fun onBillingSetupFinished(billingResult: BillingResult) {
+                    if (billingResult.responseCode == BillingClient.BillingResponseCode.OK)
+                        initiatePurchase()
+                    else {
+                        handleBillingError(billingResult.responseCode)
+                        Toast.makeText(App.instance, "Error " + billingResult.debugMessage, Toast.LENGTH_SHORT).show()
+                        Log.d(Constants.TAG, "Error " + billingResult.debugMessage)
+                    }
+                }
+
+                override fun onBillingServiceDisconnected() {}
+            })
         }
     }
 
-    // запуск покупки
-    private fun launchPurchaseFlow(productDetails: ProductDetails?) {
-        val productList = ArrayList<ProductDetailsParams>()
-        productList.add(
-            ProductDetailsParams.newBuilder()
-                .setProductDetails(productDetails!!)
+    private fun initiatePurchase() {
+        val productList = listOf(
+            QueryProductDetailsParams.Product.newBuilder()
+                .setProductId(resources.getString(R.string.billing_product_id))
+                .setProductType(BillingClient.ProductType.INAPP)
                 .build()
         )
 
-        val billingFlowParams = BillingFlowParams.newBuilder()
-            .setProductDetailsParamsList(productList)
+        val params = QueryProductDetailsParams
+            .newBuilder()
+            .setProductList(productList)
             .build()
 
-        billingClient.launchBillingFlow(this, billingFlowParams)
-    }
+        billingClient.queryProductDetailsAsync(params) { billingResult, productDetailsList ->
+            if (billingResult.responseCode == BillingClient.BillingResponseCode.OK) {
+                if (productDetailsList.size > 0) {
+                    val productDetailsParamsList = listOf(
+                        ProductDetailsParams.newBuilder()
+                            .setProductDetails(productDetailsList[0])
+                            .build()
+                    )
 
-    // запуск покупки
-    private fun handlePurchase(purchase: Purchase) {
-        if (!purchase.isAcknowledged) {
-            billingClient.acknowledgePurchase(
-                AcknowledgePurchaseParams
-                    .newBuilder()
-                    .setPurchaseToken(purchase.purchaseToken)
-                    .build()
-            ) {
-                for (pur in purchase.products) {
-                    if (pur.equals(getString(R.string.billing_product_id), ignoreCase = true)) {
-                        Log.d(Constants.TAG, "Purchase is successful")
-                        Log.d(Constants.TAG, "Yay! Purchased")
-                        showMessage(getString(R.string.snackbar_reset_app))
-                        SharedPreferencesManager.isFullVersion = true
+                    val billingFlowParams = BillingFlowParams
+                        .newBuilder()
+                        .setProductDetailsParamsList(productDetailsParamsList)
+                        .build()
 
-                        consumePurchase(purchase)
-                    }
+                    billingClient.launchBillingFlow(this@MainActivity, billingFlowParams)
+                } else {
+                    Toast.makeText(App.instance, "Purchase Item not Found", Toast.LENGTH_SHORT).show()
+                    Log.d(Constants.TAG, "Purchase Item not Found")
                 }
+            } else {
+                handleBillingError(billingResult.responseCode)
+                Toast.makeText(App.instance, " Error " + billingResult.debugMessage, Toast.LENGTH_SHORT).show()
+                Log.d(Constants.TAG, " Error " + billingResult.debugMessage)
             }
         }
     }
 
-    // запуск покупки
-    private fun consumePurchase(purchase: Purchase) {
-        val params = ConsumeParams.newBuilder()
-            .setPurchaseToken(purchase.purchaseToken)
-            .build()
+    fun handlePurchases(purchases: List<Purchase>) {
+        for (purchase in purchases) {
+            if (resources.getString(R.string.billing_product_id) == purchase.products[0] && purchase.purchaseState == Purchase.PurchaseState.PURCHASED) {
+                if (!verifyValidSignature(purchase.originalJson, purchase.signature)) {
+                    Toast.makeText(App.instance, "Error : Invalid Purchase", Toast.LENGTH_SHORT).show()
+                    Log.d(Constants.TAG, "Error : Invalid Purchase")
+                    return
+                }
 
-        billingClient.consumeAsync(params) { _, s ->
-            Log.d(Constants.TAG, "Consuming Successful: $s")
-            Log.d(Constants.TAG, "Product Consumed")
+                if (!purchase.isAcknowledged) {
+                    val acknowledgePurchaseParams = AcknowledgePurchaseParams
+                        .newBuilder()
+                        .setPurchaseToken(purchase.purchaseToken)
+                        .build()
+                    billingClient.acknowledgePurchase(acknowledgePurchaseParams, ackPurchase)
+                } else {
+                    if (!SharedPreferencesManager.isFullVersion) {
+                        SharedPreferencesManager.isFullVersion = true
+                        showMessage(getString(R.string.snackbar_reset_app))
+                        Log.d(Constants.TAG, "Item Purchased")
+                        recreate()
+                    }
+                }
+            } else if (resources.getString(R.string.billing_product_id) == purchase.products[0] && purchase.purchaseState == Purchase.PurchaseState.PENDING) {
+                Toast.makeText(App.instance, "Purchase is Pending. Please complete Transaction", Toast.LENGTH_SHORT).show()
+                Log.d(Constants.TAG, "Purchase is Pending. Please complete Transaction")
+            } else if (resources.getString(R.string.billing_product_id) == purchase.products[0] && purchase.purchaseState == Purchase.PurchaseState.UNSPECIFIED_STATE) {
+                SharedPreferencesManager.isFullVersion = false
+                Toast.makeText(App.instance, "Purchase Status Unknown", Toast.LENGTH_SHORT).show()
+                Log.d(Constants.TAG, "Purchase Status Unknown")
+            }
+        }
+    }
+
+    private fun verifyValidSignature(signedData: String, signature: String): Boolean {
+        return try {
+            val base64Key = resources.getString(R.string.billing_license_key)
+            Security.verifyPurchase(base64Key, signedData, signature)
+        } catch (e: IOException) {
+            false
         }
     }
 
@@ -387,6 +424,11 @@ class MainActivity : AppCompatActivity(), PurchasesUpdatedListener {
             else -> "An unknown error occurred."
         }
         Log.d(Constants.TAG, errorMessage)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        billingClient.endConnection()
     }
 
 }
