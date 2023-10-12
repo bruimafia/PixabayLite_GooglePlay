@@ -3,7 +3,6 @@ package ru.bruimafia.pixabaylite.main
 import android.app.DownloadManager
 import android.app.SearchManager
 import android.content.Context
-import android.content.res.Resources
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -44,7 +43,7 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import ru.bruimafia.pixabaylite.R
-import ru.bruimafia.pixabaylite.adapter.VideoAdapter
+import ru.bruimafia.pixabaylite.adapter.video.VideoAdapter
 import ru.bruimafia.pixabaylite.api.ApiClientVideo
 import ru.bruimafia.pixabaylite.api.ApiService
 import ru.bruimafia.pixabaylite.databinding.FragmentVideosBinding
@@ -93,32 +92,26 @@ class VideosFragment : Fragment() {
 
         loadData(query, order, page)
 
-        adapter.setReachEndListener(object : VideoAdapter.OnReachEndListener {
-            override fun onLoad() {
-                bind.progressBarHor.visibility = View.VISIBLE
-                loadData(query, order, page)
-            }
-        })
+        adapter.onReachEndListener = {
+            bind.progressBarHor.visibility = View.VISIBLE
+            loadData(query, order, page)
+        }
 
-        adapter.setSaveButtonListener(object : VideoAdapter.OnSaveButtonListener {
-            override fun onSave(video: Video, position: Int) {
-                if (!SharedPreferencesManager.isFullVersion)
-                    showAd()
-                if (video.videos.large.url != "")
-                    downloadFile(video.videos.large.url.replace("https://player.vimeo.com/external/", ""))
-                else
-                    downloadFile(video.videos.medium.url.replace("https://player.vimeo.com/external/", ""))
-            }
-        })
+        adapter.onSaveButtonListener = {
+            if (!SharedPreferencesManager.isFullVersion)
+                showAd()
+            if (it.videos.large.url != "")
+                downloadFile(it.videos.large.url.replace("https://player.vimeo.com/external/", ""))
+            else
+                downloadFile(it.videos.medium.url.replace("https://player.vimeo.com/external/", ""))
+        }
 
-        adapter.setSearchTagListener(object : VideoAdapter.OnSearchTagListener {
-            override fun onSearch(title: String) {
-                searchView.setQuery(title, true)
-                searchView.isIconified = false
-                searchView.clearFocus()
-                loadData(title, order, page)
-            }
-        })
+        adapter.onSearchTagListener = {
+            searchView.setQuery(it, true)
+            searchView.isIconified = false
+            searchView.clearFocus()
+            loadData(it, order, page)
+        }
 
         bind.swipeRefreshLayout.setOnRefreshListener {
             page = 1
@@ -211,7 +204,7 @@ class VideosFragment : Fragment() {
 
     // показ сообщения
     private fun showMessage(msg: String?) {
-        Snackbar.make(bind.root.rootView, msg + "", Snackbar.LENGTH_LONG).show()
+        Snackbar.make(bind.root.rootView, "$msg", Snackbar.LENGTH_LONG).show()
     }
 
     // загрузка данных
@@ -234,7 +227,7 @@ class VideosFragment : Fragment() {
 
     // показ данных
     private fun showData(list: MutableList<Video>) {
-        adapter.setList(list)
+        adapter.submitList(list)
         bind.recycler.adapter = adapter
         page++
         bind.progressBar.visibility = View.GONE
@@ -309,7 +302,8 @@ class VideosFragment : Fragment() {
 
     // инициализация межстраничной Яндекс рекламы в приложении
     private fun loadInterstitialAd() {
-        val adRequestConfiguration = AdRequestConfiguration.Builder(resources.getString(R.string.ads_yandex_interstitialAd_video_unitId)).build()
+        val adRequestConfiguration =
+            AdRequestConfiguration.Builder(resources.getString(R.string.ads_yandex_interstitialAd_video_unitId)).build()
         interstitialAdLoader?.loadAd(adRequestConfiguration)
     }
 

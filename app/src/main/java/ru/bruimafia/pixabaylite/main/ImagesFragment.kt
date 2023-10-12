@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.SearchManager
 import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.MediaScannerConnection
@@ -12,7 +11,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuInflater
@@ -26,7 +24,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import androidx.core.content.ContextCompat
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.RecyclerView
@@ -54,15 +51,13 @@ import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
-import ru.bruimafia.pixabaylite.App
 import ru.bruimafia.pixabaylite.BuildConfig
 import ru.bruimafia.pixabaylite.R
-import ru.bruimafia.pixabaylite.adapter.ImageAdapter
+import ru.bruimafia.pixabaylite.adapter.image.ImageAdapter
 import ru.bruimafia.pixabaylite.api.ApiClientImage
 import ru.bruimafia.pixabaylite.api.ApiService
 import ru.bruimafia.pixabaylite.databinding.FragmentImagesBinding
 import ru.bruimafia.pixabaylite.model.image.Image
-import ru.bruimafia.pixabaylite.util.Constants
 import ru.bruimafia.pixabaylite.util.SharedPreferencesManager
 import java.io.File
 import java.io.OutputStream
@@ -114,29 +109,23 @@ class ImagesFragment : Fragment() {
         loadData(query, order, page)
         //initGoogleAdsInterstitial()
 
-        adapter.setReachEndListener(object : ImageAdapter.OnReachEndListener {
-            override fun onLoad() {
-                bind.progressBarHor.visibility = View.VISIBLE
-                loadData(query, order, page)
-            }
-        })
+        adapter.onReachEndListener = {
+            bind.progressBarHor.visibility = View.VISIBLE
+            loadData(query, order, page)
+        }
 
-        adapter.setSaveButtonListener(object : ImageAdapter.OnSaveButtonListener {
-            override fun onSave(image: Image, position: Int) {
-                if (!SharedPreferencesManager.isFullVersion)
-                    showAd()
-                downloadFile(image.imageURL.replace("https://pixabay.com/get/", ""))
-            }
-        })
+        adapter.onSaveButtonListener = {
+            if (!SharedPreferencesManager.isFullVersion)
+                showAd()
+            downloadFile(it.imageURL.replace("https://pixabay.com/get/", ""))
+        }
 
-        adapter.setSearchTagListener(object : ImageAdapter.OnSearchTagListener {
-            override fun onSearch(title: String) {
-                searchView.setQuery(title, true)
-                searchView.isIconified = false
-                searchView.clearFocus()
-                loadData(title, order, page)
-            }
-        })
+        adapter.onSearchTagListener = {
+            searchView.setQuery(it, true)
+            searchView.isIconified = false
+            searchView.clearFocus()
+            loadData(it, order, page)
+        }
 
         bind.swipeRefreshLayout.setOnRefreshListener {
             page = 1
@@ -229,7 +218,7 @@ class ImagesFragment : Fragment() {
 
     // показ сообщения
     private fun showMessage(msg: String?) {
-        Snackbar.make(bind.root.rootView, msg + "", Snackbar.LENGTH_LONG).show()
+        Snackbar.make(bind.root.rootView, "$msg", Snackbar.LENGTH_LONG).show()
     }
 
     // загрузка данных
@@ -252,7 +241,7 @@ class ImagesFragment : Fragment() {
 
     // показ данных
     private fun showData(list: MutableList<Image>) {
-        adapter.setList(list)
+        adapter.submitList(list)
         bind.recycler.adapter = adapter
         page++
         bind.progressBar.visibility = View.GONE

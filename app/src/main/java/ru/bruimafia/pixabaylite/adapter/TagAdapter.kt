@@ -7,34 +7,27 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import ru.bruimafia.pixabaylite.R
 
-class TagAdapter(private val list: MutableList<String>) :
-    RecyclerView.Adapter<TagAdapter.TagViewHolder>() {
+class TagAdapter(private val list: MutableList<String>) : RecyclerView.Adapter<TagAdapter.TagViewHolder>() {
 
-    lateinit var onClickTagListener: OnClickTagListener
-
-    interface OnClickTagListener {
-        fun onClick(title: String)
-    }
-
-    fun setClickTagListener(listener: OnClickTagListener) {
-        onClickTagListener = listener
-    }
+    var onClickTagListener: ((String) -> Unit)? = null
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): TagViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_tag, parent, false)
-        return TagViewHolder(view)
+        return TagViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.item_tag, parent, false))
+    }
+
+    override fun getItemCount(): Int {
+        return list.size
     }
 
     override fun onBindViewHolder(holder: TagViewHolder, position: Int) {
         holder.tag.text = list[position]
-
-        holder.tag.setOnClickListener { onClickTagListener.onClick(list[position]) }
+        holder.tag.setOnClickListener {
+            onClickTagListener?.invoke(list[position])
+        }
     }
 
-    override fun getItemCount() = list.size
-
-    inner class TagViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val tag: TextView = itemView.findViewById(R.id.tv_title)
+    inner class TagViewHolder(view: View) : RecyclerView.ViewHolder(view) {
+        val tag: TextView = view.findViewById(R.id.tv_title)
     }
 
 }
