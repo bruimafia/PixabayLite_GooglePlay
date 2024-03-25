@@ -1,5 +1,5 @@
 package ru.bruimafia.pixabaylite
-
+/*
 import android.annotation.SuppressLint
 import android.content.Intent
 import com.daimajia.androidanimations.library.Techniques
@@ -52,3 +52,4 @@ class SplashScreen : AwesomeSplash() {
     }
 
 }
+ */
